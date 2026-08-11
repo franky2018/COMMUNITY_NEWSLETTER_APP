@@ -134,3 +134,31 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Docker
+.docker
+
+# Docker Compose override
+docker-compose.override.yml
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+# Environment
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+server/.agents
+server/.claude
+server/.windsurf
+server/pnpm-lock.yaml
+server/pnpm-workspace.yaml
