@@ -1,8 +1,87 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  AUTHOR
+}
+
+enum NewsletterStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(AUTHOR)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  newsletters Newsletter[]
+
+  @@index([role])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  newsletters Newsletter[]
+}
+
+model Newsletter {
+  id          String           @id @default(uuid())
+  title       String
+  slug        String           @unique
+  content     String
+  excerpt     String?
+  status      NewsletterStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+}
+
+model Subscriber {
+  id             String           @id @default(uuid())
+  email          String           @unique
+  name           String?
+  status         SubscriberStatus @default(ACTIVE)
+  subscribedAt   DateTime         @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([status])
 }
