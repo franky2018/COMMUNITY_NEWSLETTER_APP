@@ -45,9 +45,9 @@ describe('Protected routes (integration)', () => {
   let app: INestApplication;
   let jwt: JwtService;
 
-  const sign = (role: UserRole) =>
+  const sign = (role: UserRole, id = 'u1') =>
     jwt.signAsync(
-      { sub: 'u1', email: 'user@example.com', role },
+      { sub: id, email: 'user@example.com', role },
       { secret: SECRET, expiresIn: '15m' },
     );
 
@@ -56,8 +56,8 @@ describe('Protected routes (integration)', () => {
       findById: jest.fn(async (id: string) => ({
         id,
         email: 'user@example.com',
-        name: 'User',
-        role: UserRole.AUTHOR,
+        name: id === 'admin-u1' ? 'Admin User' : 'User',
+        role: id === 'admin-u1' ? UserRole.ADMIN : UserRole.AUTHOR,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -123,7 +123,7 @@ describe('Protected routes (integration)', () => {
   });
 
   it('allows an admin through the role guard (200)', async () => {
-    const token = await sign(UserRole.ADMIN);
+    const token = await sign(UserRole.ADMIN, 'admin-u1');
     return request(app.getHttpServer())
       .get('/admin-only')
       .set('Authorization', `Bearer ${token}`)
@@ -131,8 +131,8 @@ describe('Protected routes (integration)', () => {
   });
 
   it('enforces class-level role metadata for admin-only routes', async () => {
-    const adminToken = await sign(UserRole.ADMIN);
-    const authorToken = await sign(UserRole.AUTHOR);
+    const adminToken = await sign(UserRole.ADMIN, 'admin-u1');
+    const authorToken = await sign(UserRole.AUTHOR, 'u1');
 
     await request(app.getHttpServer())
       .get('/class-role/admin-only')
