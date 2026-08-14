@@ -18,7 +18,6 @@ export class CreateNewsletterDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(10)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   content!: string;
 
@@ -30,5 +29,6 @@ export class CreateNewsletterDto {
 
   @IsOptional()
   @IsUUID()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   categoryId?: string | null;
 }

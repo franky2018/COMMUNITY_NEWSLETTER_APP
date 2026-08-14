@@ -9,12 +9,12 @@ import { Prisma } from '../../generated/prisma/client';
 import { NewsletterStatus, UserRole } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNewsletterDto } from './dto/create-newsletter.dto';
+import { PublicQueryNewsletterDto, QueryNewsletterDto } from './dto/query-newsletter.dto';
 import { UpdateNewsletterDto } from './dto/update-newsletter.dto';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 
 const safeAuthorSelect = {
   id: true,
-  email: true,
   name: true,
   role: true,
 } as const;
@@ -43,12 +43,12 @@ export class NewslettersService {
     const title = dto.title.trim();
     const slug = await this.generateUniqueSlug(title);
 
-    // Validate categoryId if provided
     if (dto.categoryId) {
       const category = await this.prisma.category.findUnique({
         where: { id: dto.categoryId },
         select: { id: true },
       });
+
       if (!category) {
         throw new NotFoundException('Category not found');
       }
@@ -80,31 +80,61 @@ export class NewslettersService {
     }
   }
 
-  async findAll(
-    user: AuthenticatedUser,
-    filters?: { status?: NewsletterStatus; categoryId?: string },
-  ) {
+  async findAll(user: AuthenticatedUser, filters?: QueryNewsletterDto) {
     const where: Prisma.NewsletterWhereInput = {};
 
-    // Apply ownership filter for AUTHOR role
     if (user.role === UserRole.AUTHOR) {
       where.authorId = user.id;
     }
 
-    // Apply status filter if provided
     if (filters?.status) {
       where.status = filters.status;
     }
 
-    // Apply category filter if provided
     if (filters?.categoryId) {
       where.categoryId = filters.categoryId;
     }
 
-    return await this.prisma.newsletter.findMany({
+    if (filters?.authorId) {
+      if (user.role === UserRole.AUTHOR && filters.authorId !== user.id) {
+        throw new ForbiddenException('Authors cannot view another author\'s newsletters');
+      }
+
+      where.authorId = filters.authorId;
+    }
+
+    return this.prisma.newsletter.findMany({
       where,
       select: newsletterSelect,
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findPublic(filters?: PublicQueryNewsletterDto) {
+    const where: Prisma.NewsletterWhereInput = {
+      status: NewsletterStatus.PUBLISHED,
+    };
+
+    if (filters?.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    return this.prisma.newsletter.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        content: true,
+        status: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        categoryId: true,
+        category: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy: { publishedAt: 'desc' },
     });
   }
 
@@ -118,19 +148,18 @@ export class NewslettersService {
       throw new NotFoundException('Newsletter not found');
     }
 
-    // Check ownership for AUTHOR role
     if (user.role === UserRole.AUTHOR && newsletter.authorId !== user.id) {
       throw new ForbiddenException('You can only view your own newsletters');
+    }
+
+    if (user.role === UserRole.AUTHOR && newsletter.status === NewsletterStatus.DRAFT && newsletter.authorId !== user.id) {
+      throw new ForbiddenException('You do not have access to this newsletter');
     }
 
     return newsletter;
   }
 
-  async update(
-    id: string,
-    dto: UpdateNewsletterDto,
-    user: AuthenticatedUser,
-  ) {
+  async update(id: string, dto: UpdateNewsletterDto, user: AuthenticatedUser) {
     const current = await this.prisma.newsletter.findUnique({
       where: { id },
       select: {
@@ -146,43 +175,47 @@ export class NewslettersService {
       throw new NotFoundException('Newsletter not found');
     }
 
-    // Check ownership for AUTHOR role
     if (user.role === UserRole.AUTHOR && current.authorId !== user.id) {
       throw new ForbiddenException('You can only update your own newsletters');
     }
 
-    // Validate categoryId if provided
+    if (user.role === UserRole.AUTHOR && current.status !== NewsletterStatus.DRAFT) {
+      throw new ForbiddenException('Authors can only update their own drafts');
+    }
+
     if (dto.categoryId !== undefined && dto.categoryId) {
       const category = await this.prisma.category.findUnique({
         where: { id: dto.categoryId },
         select: { id: true },
       });
+
       if (!category) {
         throw new NotFoundException('Category not found');
       }
     }
 
     const nextTitle = dto.title !== undefined ? dto.title.trim() : current.title;
-    const shouldUpdateSlug =
-      dto.title !== undefined && dto.title.trim() !== current.title;
-    const nextSlug = shouldUpdateSlug
-      ? await this.generateUniqueSlug(nextTitle, id)
-      : current.slug;
+    const shouldUpdateSlug = dto.title !== undefined && dto.title.trim() !== current.title;
+    const nextSlug = shouldUpdateSlug ? await this.generateUniqueSlug(nextTitle, id) : current.slug;
 
     const updateData: Prisma.NewsletterUpdateInput = {};
 
     if (dto.title !== undefined) {
       updateData.title = nextTitle;
     }
+
     if (shouldUpdateSlug) {
       updateData.slug = nextSlug;
     }
+
     if (dto.content !== undefined) {
       updateData.content = dto.content.trim();
     }
+
     if (dto.excerpt !== undefined) {
       updateData.excerpt = dto.excerpt ? dto.excerpt.trim() : null;
     }
+
     if (dto.categoryId !== undefined) {
       if (dto.categoryId) {
         updateData.category = { connect: { id: dto.categoryId } };
@@ -216,7 +249,6 @@ export class NewslettersService {
       select: {
         id: true,
         status: true,
-        authorId: true,
       },
     });
 
@@ -224,20 +256,12 @@ export class NewslettersService {
       throw new NotFoundException('Newsletter not found');
     }
 
-    // Only ADMIN and EDITOR can publish
     if (user.role === UserRole.AUTHOR) {
       throw new ForbiddenException('Authors cannot publish newsletters');
     }
 
-    // Validate status transition
-    if (newsletter.status !== NewsletterStatus.DRAFT) {
-      throw new BadRequestException(
-        `Cannot publish newsletter with status ${newsletter.status}`,
-      );
-    }
-
-    try {
-      return await this.prisma.newsletter.update({
+    if (newsletter.status === NewsletterStatus.DRAFT) {
+      return this.prisma.newsletter.update({
         where: { id },
         data: {
           status: NewsletterStatus.PUBLISHED,
@@ -245,14 +269,19 @@ export class NewslettersService {
         },
         select: newsletterSelect,
       });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('Newsletter not found');
-        }
-      }
-      throw error;
     }
+
+    if (newsletter.status === NewsletterStatus.PUBLISHED) {
+      return this.prisma.newsletter.update({
+        where: { id },
+        data: {
+          publishedAt: new Date(),
+        },
+        select: newsletterSelect,
+      });
+    }
+
+    throw new BadRequestException('Archived newsletters cannot be republished');
   }
 
   async archive(id: string, user: AuthenticatedUser) {
@@ -261,7 +290,6 @@ export class NewslettersService {
       select: {
         id: true,
         status: true,
-        authorId: true,
       },
     });
 
@@ -269,38 +297,25 @@ export class NewslettersService {
       throw new NotFoundException('Newsletter not found');
     }
 
-    // Only ADMIN and EDITOR can archive
     if (user.role === UserRole.AUTHOR) {
       throw new ForbiddenException('Authors cannot archive newsletters');
     }
 
-    // Validate status transition
     if (newsletter.status === NewsletterStatus.ARCHIVED) {
       throw new BadRequestException('Newsletter is already archived');
     }
 
-    try {
-      return await this.prisma.newsletter.update({
-        where: { id },
-        data: {
-          status: NewsletterStatus.ARCHIVED,
-        },
-        select: newsletterSelect,
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('Newsletter not found');
-        }
-      }
-      throw error;
-    }
+    return this.prisma.newsletter.update({
+      where: { id },
+      data: {
+        status: NewsletterStatus.ARCHIVED,
+        publishedAt: null,
+      },
+      select: newsletterSelect,
+    });
   }
 
-  private async generateUniqueSlug(
-    title: string,
-    excludeId?: string,
-  ): Promise<string> {
+  private async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
     const baseSlug = this.slugify(title);
     let attempt = baseSlug || 'newsletter';
     let counter = 1;
