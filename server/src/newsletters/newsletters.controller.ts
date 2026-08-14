@@ -14,18 +14,20 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { UserRole, NewsletterStatus } from '../../generated/prisma/enums';
+import { UserRole } from '../../generated/prisma/enums';
 import { NewslettersService } from './newsletters.service';
 import { CreateNewsletterDto } from './dto/create-newsletter.dto';
+import { PublicQueryNewsletterDto, QueryNewsletterDto } from './dto/query-newsletter.dto';
 import { UpdateNewsletterDto } from './dto/update-newsletter.dto';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 
 @Controller('newsletters')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class NewslettersController {
   constructor(private readonly newsletters: NewslettersService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateNewsletterDto,
@@ -35,23 +37,23 @@ export class NewslettersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR)
   findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('status') status?: string,
-    @Query('categoryId') categoryId?: string,
+    @Query() query: QueryNewsletterDto,
   ) {
-    const filters: {
-      status?: NewsletterStatus;
-      categoryId?: string;
-    } = {};
-    if (status && Object.values(NewsletterStatus).includes(status as NewsletterStatus)) {
-      filters.status = status as NewsletterStatus;
-    }
-    if (categoryId) filters.categoryId = categoryId;
-    return this.newsletters.findAll(user, filters);
+    return this.newsletters.findAll(user, query);
+  }
+
+  @Get('public')
+  findPublic(@Query() query: PublicQueryNewsletterDto) {
+    return this.newsletters.findPublic(query);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR)
   findOne(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
@@ -60,6 +62,8 @@ export class NewslettersController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR)
   update(
     @Param('id') id: string,
     @Body() dto: UpdateNewsletterDto,
@@ -69,6 +73,7 @@ export class NewslettersController {
   }
 
   @Post(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @HttpCode(HttpStatus.OK)
   publish(
@@ -79,6 +84,7 @@ export class NewslettersController {
   }
 
   @Post(':id/archive')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @HttpCode(HttpStatus.OK)
   archive(
