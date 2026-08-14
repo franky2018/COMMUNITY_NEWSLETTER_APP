@@ -153,5 +153,15 @@ describe('AuthService', () => {
         UnauthorizedException,
       );
     });
+
+    it('rejects a refresh token for an inactive user', async () => {
+      users.findByEmailWithHash.mockResolvedValue(userRecord);
+      users.findById.mockResolvedValue({ ...safeUser, isActive: false });
+      const { refreshToken } = await service.login(userRecord.email, PASSWORD);
+
+      await expect(service.refresh(refreshToken)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
   });
 });
