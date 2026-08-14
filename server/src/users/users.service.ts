@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import type { User } from '../../generated/prisma/client';
@@ -32,15 +33,22 @@ export class UsersService {
 
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    return this.prisma.user.create({
-      data: {
-        email: dto.email,
-        name: dto.name,
-        passwordHash,
-        ...(dto.role ? { role: dto.role } : {}),
-      },
-      select: safeUserSelect,
-    });
+    try {
+      return await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          name: dto.name,
+          passwordHash,
+          ...(dto.role ? { role: dto.role } : {}),
+        },
+        select: safeUserSelect,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('Email already in use');
+      }
+      throw error;
+    }
   }
 
   findByEmailWithHash(email: string): Promise<User | null> {

@@ -1,15 +1,29 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
+import { UsersService } from '../../users/users.service';
 import { UserRole } from '../../../generated/prisma/enums';
 
 describe('JwtStrategy', () => {
-  const strategy = new JwtStrategy({
-    getOrThrow: () => 'test-access-secret',
-  } as unknown as ConfigService);
+  const users = {
+    findById: jest.fn(async (id: string) => ({
+      id,
+      email: 'admin@example.com',
+      name: 'Admin',
+      role: UserRole.ADMIN,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+  } as unknown as UsersService;
 
-  it('maps a valid payload to the authenticated user context', () => {
-    const user = strategy.validate({
+  const strategy = new JwtStrategy(
+    { getOrThrow: () => 'test-access-secret' } as unknown as ConfigService,
+    users,
+  );
+
+  it('maps a valid payload to the authenticated user context', async () => {
+    const user = await strategy.validate({
       sub: 'user-1',
       email: 'admin@example.com',
       role: UserRole.ADMIN,
@@ -21,9 +35,29 @@ describe('JwtStrategy', () => {
     });
   });
 
-  it('rejects a payload without a subject', () => {
-    expect(() =>
+  it('rejects a payload without a subject', async () => {
+    await expect(
       strategy.validate({ sub: '', email: 'x@example.com', role: UserRole.AUTHOR }),
-    ).toThrow(UnauthorizedException);
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects inactive users', async () => {
+    users.findById.mockResolvedValueOnce({
+      id: 'user-1',
+      email: 'admin@example.com',
+      name: 'Admin',
+      role: UserRole.ADMIN,
+      isActive: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      strategy.validate({
+        sub: 'user-1',
+        email: 'admin@example.com',
+        role: UserRole.ADMIN,
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import type { AuthenticatedUser } from './types/auth.types';
+import { UsersService } from '../users/users.service';
 import { UserRole } from '../../generated/prisma/enums';
 
 const SECRET = 'integration-access-secret';
@@ -30,6 +31,16 @@ class TestController {
   }
 }
 
+@Controller('class-role')
+@UseGuards(JwtAuthGuard, RolesGuard)
+class ClassRolesController {
+  @Get('admin-only')
+  @Roles(UserRole.ADMIN)
+  adminOnly() {
+    return { ok: true };
+  }
+}
+
 describe('Protected routes (integration)', () => {
   let app: INestApplication;
   let jwt: JwtService;
@@ -41,6 +52,18 @@ describe('Protected routes (integration)', () => {
     );
 
   beforeAll(async () => {
+    const users = {
+      findById: jest.fn(async (id: string) => ({
+        id,
+        email: 'user@example.com',
+        name: 'User',
+        role: UserRole.AUTHOR,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
+    };
+
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -51,8 +74,11 @@ describe('Protected routes (integration)', () => {
         PassportModule,
         JwtModule.register({}),
       ],
-      controllers: [TestController],
-      providers: [JwtStrategy],
+      controllers: [TestController, ClassRolesController],
+      providers: [
+        JwtStrategy,
+        { provide: UsersService, useValue: users },
+      ],
     }).compile();
 
     app = moduleRef.createNestApplication();
@@ -102,5 +128,20 @@ describe('Protected routes (integration)', () => {
       .get('/admin-only')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
+  });
+
+  it('enforces class-level role metadata for admin-only routes', async () => {
+    const adminToken = await sign(UserRole.ADMIN);
+    const authorToken = await sign(UserRole.AUTHOR);
+
+    await request(app.getHttpServer())
+      .get('/class-role/admin-only')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/class-role/admin-only')
+      .set('Authorization', `Bearer ${authorToken}`)
+      .expect(403);
   });
 });
