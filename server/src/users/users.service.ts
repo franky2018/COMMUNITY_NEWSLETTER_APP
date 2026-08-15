@@ -14,6 +14,7 @@ const safeUserSelect = {
   name: true,
   role: true,
   isActive: true,
+  tokenVersion: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -59,6 +60,13 @@ export class UsersService {
     return this.prisma.user.findUnique({
       where: { id },
       select: safeUserSelect,
+    });
+  }
+
+  async incrementTokenVersion(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { tokenVersion: { increment: 1 } },
     });
   }
 }

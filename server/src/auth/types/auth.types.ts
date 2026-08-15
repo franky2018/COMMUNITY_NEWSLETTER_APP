@@ -4,10 +4,12 @@ export interface JwtPayload {
   sub: string;
   email: string;
   role: UserRole;
+  tokenVersion: number;
 }
 
 export interface JwtRefreshPayload {
   sub: string;
+  tokenVersion: number;
 }
 
 export interface AuthenticatedUser {

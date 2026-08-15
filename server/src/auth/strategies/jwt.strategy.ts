@@ -32,6 +32,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Token is stale or invalid');
     }
 
+    if (payload.tokenVersion !== user.tokenVersion) {
+      throw new UnauthorizedException('Token has been revoked');
+    }
+
     return { id: user.id, email: user.email, role: user.role };
   }
 }

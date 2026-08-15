@@ -23,6 +23,7 @@ const userRecord = {
   name: 'Admin',
   role: UserRole.ADMIN,
   isActive: true,
+  tokenVersion: 0,
   passwordHash,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -33,10 +34,18 @@ const { passwordHash: _omit, ...safeUser } = userRecord;
 describe('AuthService', () => {
   let service: AuthService;
   let jwt: JwtService;
-  let users: { findByEmailWithHash: jest.Mock; findById: jest.Mock };
+  let users: {
+    findByEmailWithHash: jest.Mock;
+    findById: jest.Mock;
+    incrementTokenVersion: jest.Mock;
+  };
 
   beforeEach(async () => {
-    users = { findByEmailWithHash: jest.fn(), findById: jest.fn() };
+    users = {
+      findByEmailWithHash: jest.fn(),
+      findById: jest.fn(),
+      incrementTokenVersion: jest.fn(),
+    };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -162,6 +171,23 @@ describe('AuthService', () => {
       await expect(service.refresh(refreshToken)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
+    });
+
+    it('rejects a refresh token after the token version is bumped', async () => {
+      users.findByEmailWithHash.mockResolvedValue(userRecord);
+      users.findById.mockResolvedValue({ ...safeUser, tokenVersion: 1 });
+      const { refreshToken } = await service.login(userRecord.email, PASSWORD);
+
+      await expect(service.refresh(refreshToken)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('logout', () => {
+    it('increments the user token version', async () => {
+      await service.logout('user-1');
+      expect(users.incrementTokenVersion).toHaveBeenCalledWith('user-1');
     });
   });
 });
