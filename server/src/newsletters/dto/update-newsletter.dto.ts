@@ -20,6 +20,8 @@ export class UpdateNewsletterDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  @MinLength(10)
+  @MaxLength(100000)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   content?: string;
 

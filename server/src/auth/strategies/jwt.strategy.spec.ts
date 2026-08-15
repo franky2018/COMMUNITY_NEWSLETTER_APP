@@ -12,6 +12,7 @@ describe('JwtStrategy', () => {
       name: 'Admin',
       role: UserRole.ADMIN,
       isActive: true,
+      tokenVersion: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
@@ -27,6 +28,7 @@ describe('JwtStrategy', () => {
       sub: 'user-1',
       email: 'admin@example.com',
       role: UserRole.ADMIN,
+      tokenVersion: 0,
     });
     expect(user).toEqual({
       id: 'user-1',
@@ -37,7 +39,12 @@ describe('JwtStrategy', () => {
 
   it('rejects a payload without a subject', async () => {
     await expect(
-      strategy.validate({ sub: '', email: 'x@example.com', role: UserRole.AUTHOR }),
+      strategy.validate({
+        sub: '',
+        email: 'x@example.com',
+        role: UserRole.AUTHOR,
+        tokenVersion: 0,
+      }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -48,6 +55,7 @@ describe('JwtStrategy', () => {
       name: 'Admin',
       role: UserRole.ADMIN,
       isActive: false,
+      tokenVersion: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -57,6 +65,18 @@ describe('JwtStrategy', () => {
         sub: 'user-1',
         email: 'admin@example.com',
         role: UserRole.ADMIN,
+        tokenVersion: 0,
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects a payload whose token version is stale', async () => {
+    await expect(
+      strategy.validate({
+        sub: 'user-1',
+        email: 'admin@example.com',
+        role: UserRole.ADMIN,
+        tokenVersion: 5,
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
