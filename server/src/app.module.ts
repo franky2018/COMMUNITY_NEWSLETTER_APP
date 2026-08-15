@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { NewslettersModule } from './newsletters/newsletters.module';
+import { SubscribersModule } from './subscribers/subscribers.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NewslettersModule } from './newsletters/newsletters.module';
     AuthModule,
     CategoriesModule,
     NewslettersModule,
+    SubscribersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
