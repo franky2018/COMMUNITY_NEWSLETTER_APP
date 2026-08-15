@@ -1,8 +1,10 @@
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriberStatus } from '../../generated/prisma/enums';
@@ -22,85 +24,76 @@ const subscriberSelect = {
 
 @Injectable()
 export class SubscribersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
-  async create(dto: CreateSubscriberDto) {
+  async create(dto: CreateSubscriberDto): Promise<void> {
     const normalizedEmail = dto.email.trim().toLowerCase();
     const trimmedName = dto.name?.trim() || null;
 
-    // Check if subscriber already exists
     const existing = await this.prisma.subscriber.findUnique({
       where: { email: normalizedEmail },
-      select: { id: true, status: true, subscribedAt: true },
+      select: { id: true, status: true },
     });
 
-    // If ACTIVE, return conflict
-    if (existing && existing.status === SubscriberStatus.ACTIVE) {
-      throw new ConflictException(
-        'Subscriber with this email already exists and is active',
-      );
+    if (existing) {
+      if (existing.status === SubscriberStatus.UNSUBSCRIBED) {
+        await this.prisma.subscriber.update({
+          where: { id: existing.id },
+          data: {
+            status: SubscriberStatus.ACTIVE,
+            subscribedAt: new Date(),
+            unsubscribedAt: null,
+          },
+        });
+      }
+      return;
     }
 
-    // If UNSUBSCRIBED, reactivate
-    if (existing && existing.status === SubscriberStatus.UNSUBSCRIBED) {
-      return await this.prisma.subscriber.update({
-        where: { id: existing.id },
-        data: {
-          status: SubscriberStatus.ACTIVE,
-          subscribedAt: new Date(),
-          unsubscribedAt: null,
-        },
-        select: subscriberSelect,
-      });
-    }
-
-    // Create new subscriber
     try {
-      return await this.prisma.subscriber.create({
+      await this.prisma.subscriber.create({
         data: {
           email: normalizedEmail,
           name: trimmedName,
           status: SubscriberStatus.ACTIVE,
           subscribedAt: new Date(),
         },
-        select: subscriberSelect,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException(
-          'Subscriber with this email already exists',
-        );
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return;
       }
       throw error;
     }
   }
 
-  async unsubscribe(id: string) {
-    const existing = await this.prisma.subscriber.findUnique({
-      where: { id },
-      select: { id: true, status: true },
-    });
+  generateUnsubscribeToken(id: string): string {
+    return `${id}.${this.sign(id)}`;
+  }
 
-    if (!existing) {
-      throw new NotFoundException('Subscriber not found');
+  async unsubscribeByToken(token: string): Promise<void> {
+    const separator = token.lastIndexOf('.');
+    if (separator <= 0) {
+      throw new BadRequestException('Invalid unsubscribe token');
     }
 
-    // If already unsubscribed, return current state
-    if (existing.status === SubscriberStatus.UNSUBSCRIBED) {
-      return await this.prisma.subscriber.findUnique({
-        where: { id },
-        select: subscriberSelect,
-      });
+    const id = token.slice(0, separator);
+    const signature = token.slice(separator + 1);
+    if (!this.verify(id, signature)) {
+      throw new BadRequestException('Invalid unsubscribe token');
     }
 
-    // Unsubscribe
-    return await this.prisma.subscriber.update({
-      where: { id },
+    await this.prisma.subscriber.updateMany({
+      where: { id, status: SubscriberStatus.ACTIVE },
       data: {
         status: SubscriberStatus.UNSUBSCRIBED,
         unsubscribedAt: new Date(),
       },
-      select: subscriberSelect,
     });
   }
 
@@ -128,5 +121,27 @@ export class SubscribersService {
     }
 
     return subscriber;
+  }
+
+  private sign(value: string): string {
+    return createHmac('sha256', this.unsubscribeSecret())
+      .update(`unsubscribe:${value}`)
+      .digest('hex');
+  }
+
+  private verify(value: string, signature: string): boolean {
+    const expected = Buffer.from(this.sign(value));
+    const provided = Buffer.from(signature);
+    if (expected.length !== provided.length) {
+      return false;
+    }
+    return timingSafeEqual(expected, provided);
+  }
+
+  private unsubscribeSecret(): string {
+    return (
+      this.config.get<string>('UNSUBSCRIBE_SECRET') ??
+      this.config.getOrThrow<string>('JWT_SECRET')
+    );
   }
 }

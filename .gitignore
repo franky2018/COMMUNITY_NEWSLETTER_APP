@@ -135,12 +135,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Docker
-.docker
-
-# Docker Compose override
-docker-compose.override.yml
-
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
@@ -160,5 +154,4 @@ Thumbs.db
 server/.agents
 server/.claude
 server/.windsurf
-server/pnpm-lock.yaml
 server/pnpm-workspace.yaml

@@ -15,6 +15,11 @@ export interface LoginResult extends AuthTokens {
 
 @Injectable()
 export class AuthService {
+  private readonly dummyPasswordHash = bcrypt.hashSync(
+    'invalid-user-timing-guard',
+    12,
+  );
+
   constructor(
     private readonly users: UsersService,
     private readonly jwt: JwtService,
@@ -24,6 +29,9 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<SafeUser | null> {
     const user = await this.users.findByEmailWithHash(email);
     if (!user || !user.isActive) {
+      // Run a throwaway compare so response time doesn't reveal whether the
+      // email maps to a real, active account.
+      await bcrypt.compare(password, this.dummyPasswordHash);
       return null;
     }
     const matches = await bcrypt.compare(password, user.passwordHash);
@@ -57,7 +65,14 @@ export class AuthService {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+    if (payload.tokenVersion !== user.tokenVersion) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
     return this.issueTokens(user);
+  }
+
+  async logout(userId: string): Promise<void> {
+    await this.users.incrementTokenVersion(userId);
   }
 
   private async issueTokens(user: SafeUser): Promise<AuthTokens> {
@@ -65,8 +80,12 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      tokenVersion: user.tokenVersion,
     };
-    const refreshPayload: JwtRefreshPayload = { sub: user.id };
+    const refreshPayload: JwtRefreshPayload = {
+      sub: user.id,
+      tokenVersion: user.tokenVersion,
+    };
 
     const accessOptions = {
       secret: this.config.getOrThrow<string>('JWT_SECRET'),
