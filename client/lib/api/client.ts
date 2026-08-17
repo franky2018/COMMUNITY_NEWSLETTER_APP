@@ -25,6 +25,16 @@ export class ApiError extends Error {
 }
 
 let refreshInFlight: Promise<string | null> | null = null;
+let authFailureHandler: (() => void) | null = null;
+
+export function registerAuthFailureHandler(handler: (() => void) | null): void {
+  authFailureHandler = handler;
+}
+
+function handleAuthFailure(): void {
+  clearAuthTokens();
+  authFailureHandler?.();
+}
 
 async function parseResponsePayload(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -45,6 +55,7 @@ async function refreshAccessToken(): Promise<string | null> {
     const refreshToken = getRefreshToken();
 
     if (!refreshToken) {
+      handleAuthFailure();
       return null;
     }
 
@@ -57,14 +68,14 @@ async function refreshAccessToken(): Promise<string | null> {
     });
 
     if (!response.ok) {
-      clearAuthTokens();
+      handleAuthFailure();
       return null;
     }
 
     const payload = (await response.json()) as Partial<AuthTokens>;
 
     if (!payload.accessToken) {
-      clearAuthTokens();
+      handleAuthFailure();
       return null;
     }
 
