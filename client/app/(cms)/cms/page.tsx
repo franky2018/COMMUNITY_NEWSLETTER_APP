@@ -1,13 +1,38 @@
-export default function CmsHomePage() {
+"use client";
+
+import { SummaryCard } from "@/components/cms/summary-card";
+import { useAuth } from "@/lib/auth/auth-context";
+
+const ROLE_LABELS = {
+  ADMIN: "Admin",
+  EDITOR: "Editor",
+  AUTHOR: "Author",
+} as const;
+
+export default function CmsDashboardPage() {
+  const { user } = useAuth();
+
   return (
-    <main className="flex flex-1 items-center justify-center p-8">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-2xl font-semibold">CMS</h1>
-        <p className="mt-2 text-sm text-zinc-600">
-          The CMS dashboard is intentionally not implemented yet. This route group is
-          protected by middleware and will host the admin UI.
+    <div className="mx-auto w-full max-w-5xl">
+      <header>
+        <h1 className="text-2xl font-semibold">
+          Welcome back{user?.name ? `, ${user.name}` : ""}
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          {user ? `Signed in as ${ROLE_LABELS[user.role]}.` : "Loading your account…"}
         </p>
-      </div>
-    </main>
+      </header>
+
+      <section aria-label="Overview" className="mt-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SummaryCard title="Newsletters" href="/cms/newsletters" />
+          <SummaryCard title="Categories" href="/cms/categories" />
+          <SummaryCard title="Subscribers" href="/cms/subscribers" />
+        </div>
+        <p className="mt-4 text-xs text-zinc-500">
+          Summary figures are placeholders and will be connected to live data later.
+        </p>
+      </section>
+    </div>
   );
 }
