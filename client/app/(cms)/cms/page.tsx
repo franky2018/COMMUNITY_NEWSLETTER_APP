@@ -1,7 +1,11 @@
 "use client";
 
-import { SummaryCard } from "@/components/cms/summary-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { DashboardStats } from "@/components/cms/dashboard/dashboard-stats";
+import { RecentNewsletters } from "@/components/cms/dashboard/recent-newsletters";
+import { RecentSubscribers } from "@/components/cms/dashboard/recent-subscribers";
+import { useDashboardResource } from "@/components/cms/dashboard/use-dashboard-resource";
+import type { Category, Newsletter, Subscriber } from "@/types/api";
 
 const ROLE_LABELS = {
   ADMIN: "Admin",
@@ -10,7 +14,12 @@ const ROLE_LABELS = {
 } as const;
 
 export default function CmsDashboardPage() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const canViewSubscribers = role === "ADMIN" || role === "EDITOR";
+
+  const newsletters = useDashboardResource<Newsletter[]>("/newsletters");
+  const categories = useDashboardResource<Category[]>("/categories");
+  const subscribers = useDashboardResource<Subscriber[]>("/subscribers", canViewSubscribers);
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -23,16 +32,26 @@ export default function CmsDashboardPage() {
         </p>
       </header>
 
-      <section aria-label="Overview" className="mt-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SummaryCard title="Newsletters" href="/cms/newsletters" />
-          <SummaryCard title="Categories" href="/cms/categories" />
-          <SummaryCard title="Subscribers" href="/cms/subscribers" />
-        </div>
-        <p className="mt-4 text-xs text-zinc-500">
-          Summary figures are placeholders and will be connected to live data later.
-        </p>
-      </section>
+      <DashboardStats
+        newsletters={newsletters}
+        categories={categories}
+        subscribers={subscribers}
+        canViewSubscribers={canViewSubscribers}
+      />
+
+      <RecentNewsletters
+        state={newsletters.state}
+        newsletters={newsletters.data ?? []}
+        onRetry={newsletters.reload}
+      />
+
+      {canViewSubscribers ? (
+        <RecentSubscribers
+          state={subscribers.state}
+          subscribers={subscribers.data ?? []}
+          onRetry={subscribers.reload}
+        />
+      ) : null}
     </div>
   );
 }
