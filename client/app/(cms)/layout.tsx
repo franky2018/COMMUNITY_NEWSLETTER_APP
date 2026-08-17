@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { CmsHeader } from "@/components/cms/header";
+import { CmsSidebar } from "@/components/cms/sidebar";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CmsLayout({ children }: LayoutProps<"/(cms)">) {
   const router = useRouter();
   const { user, status, logout } = useAuth();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -15,7 +18,7 @@ export default function CmsLayout({ children }: LayoutProps<"/(cms)">) {
     }
   }, [status, router]);
 
-  if (status !== "authenticated") {
+  if (status !== "authenticated" || !user) {
     return (
       <div className="flex flex-1 items-center justify-center p-8 text-sm text-zinc-500">
         Loading…
@@ -24,22 +27,20 @@ export default function CmsLayout({ children }: LayoutProps<"/(cms)">) {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-black/10 px-6 py-3 dark:border-white/15">
-        <span className="text-sm font-semibold">Newsletter CMS</span>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-zinc-500">{user?.name ?? user?.email}</span>
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-md border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10"
-          >
-            Log out
-          </button>
-        </div>
-      </header>
-      {children}
+    <div className="flex flex-1">
+      <CmsSidebar
+        role={user.role}
+        mobileOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <CmsHeader
+          user={user}
+          onOpenNav={() => setMobileNavOpen(true)}
+          onLogout={logout}
+        />
+        <main className="flex-1 p-6 md:p-8">{children}</main>
+      </div>
     </div>
   );
 }
-
