@@ -17,7 +17,7 @@ type NavItem = {
 const NAV_ITEMS: readonly NavItem[] = [
   { label: "Dashboard", href: "/cms", roles: ["ADMIN", "EDITOR", "AUTHOR"] },
   { label: "Newsletters", href: "/cms/newsletters", roles: ["ADMIN", "EDITOR", "AUTHOR"] },
-  { label: "Categories", href: "/cms/categories", roles: ["ADMIN", "EDITOR"] },
+  { label: "Categories", href: "/cms/categories", roles: ["ADMIN", "EDITOR", "AUTHOR"] },
   { label: "Subscribers", href: "/cms/subscribers", roles: ["ADMIN", "EDITOR"] },
 ];
 
