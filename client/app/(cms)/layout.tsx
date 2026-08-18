@@ -7,7 +7,7 @@ import { CmsHeader } from "@/components/cms/header";
 import { CmsSidebar } from "@/components/cms/sidebar";
 import { useAuth } from "@/lib/auth/auth-context";
 
-export default function CmsLayout({ children }: LayoutProps<"/(cms)">) {
+export default function CmsLayout({ children }: LayoutProps<"/">) {
   const router = useRouter();
   const { user, status, logout } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
