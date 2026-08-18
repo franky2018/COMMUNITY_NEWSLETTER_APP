@@ -1,3 +1,3 @@
-export default function PublicLayout({ children }: LayoutProps<"/(public)">) {
+export default function PublicLayout({ children }: LayoutProps<"/">) {
   return <>{children}</>;
 }
