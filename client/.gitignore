@@ -39,4 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-public
+
+# next.js static assets (scaffold defaults)
+/public

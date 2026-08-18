@@ -19,6 +19,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: "Newsletters", href: "/cms/newsletters", roles: ["ADMIN", "EDITOR", "AUTHOR"] },
   { label: "Categories", href: "/cms/categories", roles: ["ADMIN", "EDITOR", "AUTHOR"] },
   { label: "Subscribers", href: "/cms/subscribers", roles: ["ADMIN", "EDITOR"] },
+  { label: "Users", href: "/cms/users", roles: ["ADMIN"] },
 ];
 
 export function navItemsForRole(role: UserRole): NavItem[] {
