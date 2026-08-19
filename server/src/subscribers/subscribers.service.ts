@@ -22,6 +22,14 @@ const subscriberSelect = {
   updatedAt: true,
 } as const;
 
+export type ManagedSubscriberOutcome =
+  'created' | 'reactivated' | 'already_active';
+
+export type ManagedSubscriberResult = {
+  result: ManagedSubscriberOutcome;
+  subscriber: Prisma.SubscriberGetPayload<{ select: typeof subscriberSelect }>;
+};
+
 @Injectable()
 export class SubscribersService {
   constructor(
@@ -67,6 +75,60 @@ export class SubscribersService {
         error.code === 'P2002'
       ) {
         return;
+      }
+      throw error;
+    }
+  }
+
+  async createManaged(
+    dto: CreateSubscriberDto,
+  ): Promise<ManagedSubscriberResult> {
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const trimmedName = dto.name?.trim() || null;
+
+    const existing = await this.prisma.subscriber.findUnique({
+      where: { email: normalizedEmail },
+      select: subscriberSelect,
+    });
+
+    if (existing) {
+      if (existing.status === SubscriberStatus.UNSUBSCRIBED) {
+        const subscriber = await this.prisma.subscriber.update({
+          where: { id: existing.id },
+          data: {
+            status: SubscriberStatus.ACTIVE,
+            subscribedAt: new Date(),
+            unsubscribedAt: null,
+          },
+          select: subscriberSelect,
+        });
+        return { result: 'reactivated', subscriber };
+      }
+      return { result: 'already_active', subscriber: existing };
+    }
+
+    try {
+      const subscriber = await this.prisma.subscriber.create({
+        data: {
+          email: normalizedEmail,
+          name: trimmedName,
+          status: SubscriberStatus.ACTIVE,
+          subscribedAt: new Date(),
+        },
+        select: subscriberSelect,
+      });
+      return { result: 'created', subscriber };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // A concurrent insert won the race; report the current active record.
+        const subscriber = await this.prisma.subscriber.findUniqueOrThrow({
+          where: { email: normalizedEmail },
+          select: subscriberSelect,
+        });
+        return { result: 'already_active', subscriber };
       }
       throw error;
     }
@@ -139,9 +201,6 @@ export class SubscribersService {
   }
 
   private unsubscribeSecret(): string {
-    return (
-      this.config.get<string>('UNSUBSCRIBE_SECRET') ??
-      this.config.getOrThrow<string>('JWT_SECRET')
-    );
+    return this.config.getOrThrow<string>('UNSUBSCRIBE_SECRET');
   }
 }

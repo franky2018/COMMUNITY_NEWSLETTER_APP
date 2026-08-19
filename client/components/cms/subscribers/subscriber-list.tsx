@@ -23,6 +23,18 @@ const tabBase = "rounded-md px-3 py-1.5 text-sm font-medium transition-colors";
 const retryButton =
   "mt-4 rounded-md border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10";
 
+const SUBSCRIBER_RESULTS: Record<string, { message: string; positive: boolean }> = {
+  created: { message: "Subscriber added.", positive: true },
+  reactivated: {
+    message: "Subscriber reactivated — they had previously unsubscribed.",
+    positive: true,
+  },
+  already_active: {
+    message: "This email is already an active subscriber. No changes were made.",
+    positive: false,
+  },
+};
+
 function parseFilter(value: string | null): StatusFilter {
   if (value === "ACTIVE") {
     return "active";
@@ -62,7 +74,7 @@ export function SubscriberList({ canManage }: { canManage: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filter = parseFilter(searchParams.get("status"));
-  const justCreated = searchParams.get("created") === "1";
+  const createResult = SUBSCRIBER_RESULTS[searchParams.get("result") ?? ""] ?? null;
 
   const [allSubscribers, setAllSubscribers] = useState<Subscriber[]>([]);
   const [allState, setAllState] = useState<LoadState>("loading");
@@ -154,12 +166,16 @@ export function SubscriberList({ canManage }: { canManage: boolean }) {
 
   return (
     <div className="mt-8 space-y-6">
-      {justCreated ? (
+      {createResult ? (
         <div
           role="status"
-          className="rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
+          className={
+            createResult.positive
+              ? "rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
+              : "rounded-md border border-amber-600/40 bg-amber-600/10 px-3 py-2 text-sm text-amber-700 dark:border-amber-500/40 dark:text-amber-400"
+          }
         >
-          Subscriber added.
+          {createResult.message}
         </div>
       ) : null}
 

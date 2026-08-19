@@ -7,6 +7,9 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../../generated/prisma/enums';
 
+// Real bcrypt compares (12-round timing guard) can exceed the default 5s under load.
+jest.setTimeout(30000);
+
 const TEST_CONFIG: Record<string, string> = {
   JWT_SECRET: 'test-access-secret',
   JWT_EXPIRES_IN: '15m',
@@ -79,11 +82,16 @@ describe('AuthService', () => {
 
     it('returns null for an unknown email', async () => {
       users.findByEmailWithHash.mockResolvedValue(null);
-      expect(await service.validateUser('nobody@example.com', PASSWORD)).toBeNull();
+      expect(
+        await service.validateUser('nobody@example.com', PASSWORD),
+      ).toBeNull();
     });
 
     it('returns null for an inactive user', async () => {
-      users.findByEmailWithHash.mockResolvedValue({ ...userRecord, isActive: false });
+      users.findByEmailWithHash.mockResolvedValue({
+        ...userRecord,
+        isActive: false,
+      });
       expect(await service.validateUser(userRecord.email, PASSWORD)).toBeNull();
     });
   });
@@ -113,28 +121,33 @@ describe('AuthService', () => {
 
     it('throws generic UnauthorizedException on wrong password', async () => {
       users.findByEmailWithHash.mockResolvedValue(userRecord);
-      await expect(service.login(userRecord.email, 'wrong')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(userRecord.email, 'wrong'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
     it('throws generic UnauthorizedException on unknown email', async () => {
       users.findByEmailWithHash.mockResolvedValue(null);
-      await expect(service.login('nobody@example.com', PASSWORD)).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('nobody@example.com', PASSWORD),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 
   describe('refresh-token validation', () => {
-    it('issues fresh tokens for a valid refresh token', async () => {
+    it('issues fresh tokens for a valid refresh token and rotates the version', async () => {
       users.findByEmailWithHash.mockResolvedValue(userRecord);
       users.findById.mockResolvedValue(safeUser);
+      users.incrementTokenVersion.mockResolvedValue({
+        ...safeUser,
+        tokenVersion: safeUser.tokenVersion + 1,
+      });
       const { refreshToken } = await service.login(userRecord.email, PASSWORD);
 
       const tokens = await service.refresh(refreshToken);
       expect(typeof tokens.accessToken).toBe('string');
       expect(typeof tokens.refreshToken).toBe('string');
+      expect(users.incrementTokenVersion).toHaveBeenCalledWith(userRecord.id);
     });
 
     it('rejects a malformed refresh token', async () => {

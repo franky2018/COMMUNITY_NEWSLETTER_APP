@@ -56,7 +56,10 @@ export class UsersService {
         select: safeUserSelect,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('Email already in use');
       }
       throw error;
@@ -98,7 +101,11 @@ export class UsersService {
     return user;
   }
 
-  async updateRole(actingUserId: string, id: string, role: UserRole): Promise<SafeUser> {
+  async updateRole(
+    actingUserId: string,
+    id: string,
+    role: UserRole,
+  ): Promise<SafeUser> {
     if (role === UserRole.ADMIN) {
       throw new ForbiddenException('Cannot assign the ADMIN role');
     }
@@ -112,7 +119,11 @@ export class UsersService {
     });
   }
 
-  async setActive(actingUserId: string, id: string, isActive: boolean): Promise<SafeUser> {
+  async setActive(
+    actingUserId: string,
+    id: string,
+    isActive: boolean,
+  ): Promise<SafeUser> {
     await this.assertManageableTarget(actingUserId, id);
 
     return this.prisma.user.update({
@@ -126,14 +137,18 @@ export class UsersService {
     });
   }
 
-  async incrementTokenVersion(id: string): Promise<void> {
-    await this.prisma.user.update({
+  async incrementTokenVersion(id: string): Promise<SafeUser> {
+    return this.prisma.user.update({
       where: { id },
       data: { tokenVersion: { increment: 1 } },
+      select: safeUserSelect,
     });
   }
 
-  private async assertManageableTarget(actingUserId: string, id: string): Promise<void> {
+  private async assertManageableTarget(
+    actingUserId: string,
+    id: string,
+  ): Promise<void> {
     const target = await this.prisma.user.findUnique({
       where: { id },
       select: { id: true, role: true },

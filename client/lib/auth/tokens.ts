@@ -5,6 +5,8 @@ export const REFRESH_TOKEN_COOKIE = "cn_refresh_token";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+const SECURE_ATTRIBUTE = process.env.NODE_ENV === "production" ? "; Secure" : "";
+
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") {
     return null;
@@ -26,7 +28,7 @@ function writeCookie(name: string, value: string, maxAgeSeconds = COOKIE_MAX_AGE
     return;
   }
 
-  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${SECURE_ATTRIBUTE}`;
 }
 
 function removeCookie(name: string): void {
@@ -34,7 +36,7 @@ function removeCookie(name: string): void {
     return;
   }
 
-  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax${SECURE_ATTRIBUTE}`;
 }
 
 export function getAccessToken(): string | null {

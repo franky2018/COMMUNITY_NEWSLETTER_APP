@@ -35,7 +35,10 @@ export class CategoriesService {
         select: categorySelect,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('Category name or slug already exists');
       }
       throw error;
@@ -73,9 +76,15 @@ export class CategoriesService {
     }
 
     const nextName = dto.name !== undefined ? dto.name.trim() : current.name;
-    const nextDescription = dto.description !== undefined ? dto.description?.trim() || null : undefined;
-    const shouldUpdateSlug = dto.name !== undefined && dto.name.trim() !== current.name;
-    const nextSlug = shouldUpdateSlug ? await this.generateUniqueSlug(nextName, id) : current.slug;
+    const nextDescription =
+      dto.description !== undefined
+        ? dto.description?.trim() || null
+        : undefined;
+    const shouldUpdateSlug =
+      dto.name !== undefined && dto.name.trim() !== current.name;
+    const nextSlug = shouldUpdateSlug
+      ? await this.generateUniqueSlug(nextName, id)
+      : current.slug;
 
     try {
       return await this.prisma.category.update({
@@ -83,12 +92,17 @@ export class CategoriesService {
         data: {
           ...(dto.name !== undefined ? { name: nextName } : {}),
           ...(shouldUpdateSlug ? { slug: nextSlug } : {}),
-          ...(dto.description !== undefined ? { description: nextDescription } : {}),
+          ...(dto.description !== undefined
+            ? { description: nextDescription }
+            : {}),
         },
         select: categorySelect,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('Category name or slug already exists');
       }
       throw error;
@@ -108,7 +122,10 @@ export class CategoriesService {
     await this.prisma.category.delete({ where: { id } });
   }
 
-  private async generateUniqueSlug(name: string, excludeId?: string): Promise<string> {
+  private async generateUniqueSlug(
+    name: string,
+    excludeId?: string,
+  ): Promise<string> {
     const baseSlug = this.slugify(name);
     let attempt = baseSlug || 'category';
     let counter = 1;

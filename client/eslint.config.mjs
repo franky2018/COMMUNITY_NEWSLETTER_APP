@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // List views fetch in an effect (AbortController-guarded) and set state on
+    // completion — an intentional, reviewed pattern across the CMS/public lists.
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

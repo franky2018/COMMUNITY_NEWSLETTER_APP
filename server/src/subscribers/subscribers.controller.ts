@@ -36,6 +36,18 @@ export class SubscribersController {
     return SUBSCRIBE_ACK;
   }
 
+  @Post('manage')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
+  async createManaged(
+    @Body() dto: CreateSubscriberDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.assertManager(user);
+    return this.subscribers.createManaged(dto);
+  }
+
   @Post('unsubscribe')
   @HttpCode(HttpStatus.OK)
   async unsubscribe(@Body() dto: UnsubscribeDto) {

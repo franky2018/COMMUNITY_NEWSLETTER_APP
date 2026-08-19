@@ -13,24 +13,32 @@ export class CreateNewsletterDto {
   @IsNotEmpty()
   @MinLength(3)
   @MaxLength(255)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   title!: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(10)
   @MaxLength(100000)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   content!: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   excerpt?: string | null;
 
   @IsOptional()
   @IsUUID()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   categoryId?: string | null;
 }

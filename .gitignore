@@ -155,3 +155,5 @@ server/.agents
 server/.claude
 server/.windsurf
 server/pnpm-workspace.yaml
+MVP AUDIT REPORT.md
+generate.js

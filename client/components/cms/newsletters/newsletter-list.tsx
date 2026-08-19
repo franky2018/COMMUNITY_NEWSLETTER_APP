@@ -6,7 +6,6 @@ import Link from "next/link";
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import type { Newsletter } from "@/types/api";
-import { getApiErrorMessage } from "./newsletter-errors";
 import { NewsletterActions } from "./newsletter-actions";
 import { NewsletterStatusBadge } from "./newsletter-status-badge";
 
