@@ -75,10 +75,7 @@ describe('Protected routes (integration)', () => {
         JwtModule.register({}),
       ],
       controllers: [TestController, ClassRolesController],
-      providers: [
-        JwtStrategy,
-        { provide: UsersService, useValue: users },
-      ],
+      providers: [JwtStrategy, { provide: UsersService, useValue: users }],
     }).compile();
 
     app = moduleRef.createNestApplication();

@@ -10,7 +10,7 @@ import {
   type SubscriberFormValues,
 } from "@/components/cms/subscribers/subscriber-form";
 import { SubscriberNoAccess } from "@/components/cms/subscribers/subscriber-access";
-import type { Subscriber } from "@/types/api";
+import type { ManagedSubscriberResult } from "@/types/api";
 
 export default function NewSubscriberPage() {
   const router = useRouter();
@@ -19,8 +19,8 @@ export default function NewSubscriberPage() {
   const canManage = role === "ADMIN" || role === "EDITOR";
 
   async function handleSave(values: SubscriberFormValues) {
-    await apiClient.post<Subscriber>(
-      "/subscribers",
+    const { result } = await apiClient.post<ManagedSubscriberResult>(
+      "/subscribers/manage",
       {
         email: values.email,
         name: values.name,
@@ -28,7 +28,7 @@ export default function NewSubscriberPage() {
       { requiresAuth: true },
     );
 
-    router.replace("/cms/subscribers?created=1");
+    router.replace(`/cms/subscribers?result=${result}`);
   }
 
   return (

@@ -17,7 +17,10 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../../generated/prisma/enums';
 import { NewslettersService } from './newsletters.service';
 import { CreateNewsletterDto } from './dto/create-newsletter.dto';
-import { PublicQueryNewsletterDto, QueryNewsletterDto } from './dto/query-newsletter.dto';
+import {
+  PublicQueryNewsletterDto,
+  QueryNewsletterDto,
+} from './dto/query-newsletter.dto';
 import { UpdateNewsletterDto } from './dto/update-newsletter.dto';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 
@@ -54,10 +57,7 @@ export class NewslettersController {
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR)
-  findOne(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.newsletters.findOne(id, user);
   }
 
@@ -76,10 +76,7 @@ export class NewslettersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @HttpCode(HttpStatus.OK)
-  publish(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  publish(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.newsletters.publish(id, user);
   }
 
@@ -87,10 +84,7 @@ export class NewslettersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @HttpCode(HttpStatus.OK)
-  archive(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  archive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.newsletters.archive(id, user);
   }
 }

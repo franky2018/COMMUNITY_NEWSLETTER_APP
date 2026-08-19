@@ -26,7 +26,10 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<SafeUser | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<SafeUser | null> {
     const user = await this.users.findByEmailWithHash(email);
     if (!user || !user.isActive) {
       // Run a throwaway compare so response time doesn't reveal whether the
@@ -68,7 +71,11 @@ export class AuthService {
     if (payload.tokenVersion !== user.tokenVersion) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    return this.issueTokens(user);
+
+    // Rotate: bump tokenVersion so the presented refresh token cannot be reused,
+    // then issue the new pair on the incremented version.
+    const rotated = await this.users.incrementTokenVersion(user.id);
+    return this.issueTokens(rotated);
   }
 
   async logout(userId: string): Promise<void> {

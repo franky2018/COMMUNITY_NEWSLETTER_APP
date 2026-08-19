@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -25,7 +26,7 @@ type AuthContextValue = {
   status: AuthStatus;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const loggingOutRef = useRef(false);
 
   useEffect(() => {
     registerAuthFailureHandler(() => {
@@ -89,11 +91,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authenticated");
   }, []);
 
-  const logout = useCallback(() => {
-    clearAuthTokens();
-    setUser(null);
-    setStatus("unauthenticated");
-    router.replace(LOGIN_PATH);
+  const logout = useCallback(async () => {
+    if (loggingOutRef.current) {
+      return;
+    }
+    loggingOutRef.current = true;
+
+    try {
+      // Best-effort backend revocation (bumps tokenVersion). Never block local logout on it.
+      await apiClient.post("/auth/logout", undefined, { requiresAuth: true });
+    } catch {
+      // A network/API failure must not strand the user in the CMS.
+    } finally {
+      clearAuthTokens();
+      setUser(null);
+      setStatus("unauthenticated");
+      loggingOutRef.current = false;
+      router.replace(LOGIN_PATH);
+    }
   }, [router]);
 
   const value = useMemo<AuthContextValue>(
