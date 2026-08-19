@@ -37,14 +37,20 @@ describe('RolesGuard', () => {
   });
 
   it('allows access when the user role is permitted', () => {
-    expect(guardWith([UserRole.ADMIN]).canActivate(contextFor(admin))).toBe(true);
+    expect(guardWith([UserRole.ADMIN]).canActivate(contextFor(admin))).toBe(
+      true,
+    );
   });
 
   it('denies access when the user role is not permitted', () => {
-    expect(guardWith([UserRole.ADMIN]).canActivate(contextFor(author))).toBe(false);
+    expect(guardWith([UserRole.ADMIN]).canActivate(contextFor(author))).toBe(
+      false,
+    );
   });
 
   it('denies access when there is no authenticated user', () => {
-    expect(guardWith([UserRole.ADMIN]).canActivate(contextFor(undefined))).toBe(false);
+    expect(guardWith([UserRole.ADMIN]).canActivate(contextFor(undefined))).toBe(
+      false,
+    );
   });
 });

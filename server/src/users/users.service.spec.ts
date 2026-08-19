@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from './users.service';
@@ -80,7 +84,9 @@ describe('UsersService', () => {
 
       expect(result).not.toHaveProperty('passwordHash');
       // create is called with an explicit select that excludes passwordHash
-      expect(prisma.user.create.mock.calls[0][0].select.passwordHash).toBeUndefined();
+      expect(
+        prisma.user.create.mock.calls[0][0].select.passwordHash,
+      ).toBeUndefined();
     }, 30000);
 
     it('rejects a duplicate email with ConflictException', async () => {
@@ -134,7 +140,9 @@ describe('UsersService', () => {
     it('throws NotFoundException when the user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('missing')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findOne('missing')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('returns the safe user when found', async () => {
@@ -154,7 +162,10 @@ describe('UsersService', () => {
     });
 
     it('rejects modifying your own account', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', role: UserRole.ADMIN });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        role: UserRole.ADMIN,
+      });
 
       await expect(
         service.updateRole('admin-1', 'admin-1', UserRole.EDITOR),
@@ -163,7 +174,10 @@ describe('UsersService', () => {
     });
 
     it('rejects modifying another ADMIN account', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'admin-2', role: UserRole.ADMIN });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'admin-2',
+        role: UserRole.ADMIN,
+      });
 
       await expect(
         service.updateRole('admin-1', 'admin-2', UserRole.EDITOR),
@@ -180,7 +194,10 @@ describe('UsersService', () => {
     });
 
     it('updates the role and bumps tokenVersion to revoke stale tokens', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u2', role: UserRole.AUTHOR });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u2',
+        role: UserRole.AUTHOR,
+      });
       prisma.user.update.mockResolvedValue({ id: 'u2', role: UserRole.EDITOR });
 
       await service.updateRole('admin-1', 'u2', UserRole.EDITOR);
@@ -195,24 +212,33 @@ describe('UsersService', () => {
 
   describe('setActive', () => {
     it('rejects deactivating your own account', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', role: UserRole.ADMIN });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        role: UserRole.ADMIN,
+      });
 
-      await expect(service.setActive('admin-1', 'admin-1', false)).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        service.setActive('admin-1', 'admin-1', false),
+      ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it('rejects modifying an ADMIN account', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'admin-2', role: UserRole.ADMIN });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'admin-2',
+        role: UserRole.ADMIN,
+      });
 
-      await expect(service.setActive('admin-1', 'admin-2', false)).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        service.setActive('admin-1', 'admin-2', false),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('bumps tokenVersion when deactivating', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u2', role: UserRole.AUTHOR });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u2',
+        role: UserRole.AUTHOR,
+      });
       prisma.user.update.mockResolvedValue({ id: 'u2', isActive: false });
 
       await service.setActive('admin-1', 'u2', false);
@@ -223,7 +249,10 @@ describe('UsersService', () => {
     });
 
     it('does not bump tokenVersion when reactivating', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u2', role: UserRole.AUTHOR });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u2',
+        role: UserRole.AUTHOR,
+      });
       prisma.user.update.mockResolvedValue({ id: 'u2', isActive: true });
 
       await service.setActive('admin-1', 'u2', true);

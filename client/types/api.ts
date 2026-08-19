@@ -72,3 +72,10 @@ export interface AuthTokens {
 export interface LoginResponse extends AuthTokens {
   user: User;
 }
+
+export type ManagedSubscriberOutcome = "created" | "reactivated" | "already_active";
+
+export interface ManagedSubscriberResult {
+  result: ManagedSubscriberOutcome;
+  subscriber: Subscriber;
+}

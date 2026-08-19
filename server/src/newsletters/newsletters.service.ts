@@ -9,7 +9,10 @@ import { Prisma } from '../../generated/prisma/client';
 import { NewsletterStatus, UserRole } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNewsletterDto } from './dto/create-newsletter.dto';
-import { PublicQueryNewsletterDto, QueryNewsletterDto } from './dto/query-newsletter.dto';
+import {
+  PublicQueryNewsletterDto,
+  QueryNewsletterDto,
+} from './dto/query-newsletter.dto';
 import { UpdateNewsletterDto } from './dto/update-newsletter.dto';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 
@@ -97,7 +100,9 @@ export class NewslettersService {
 
     if (filters?.authorId) {
       if (user.role === UserRole.AUTHOR && filters.authorId !== user.id) {
-        throw new ForbiddenException('Authors cannot view another author\'s newsletters');
+        throw new ForbiddenException(
+          "Authors cannot view another author's newsletters",
+        );
       }
 
       where.authorId = filters.authorId;
@@ -152,7 +157,11 @@ export class NewslettersService {
       throw new ForbiddenException('You can only view your own newsletters');
     }
 
-    if (user.role === UserRole.AUTHOR && newsletter.status === NewsletterStatus.DRAFT && newsletter.authorId !== user.id) {
+    if (
+      user.role === UserRole.AUTHOR &&
+      newsletter.status === NewsletterStatus.DRAFT &&
+      newsletter.authorId !== user.id
+    ) {
       throw new ForbiddenException('You do not have access to this newsletter');
     }
 
@@ -179,7 +188,10 @@ export class NewslettersService {
       throw new ForbiddenException('You can only update your own newsletters');
     }
 
-    if (user.role === UserRole.AUTHOR && current.status !== NewsletterStatus.DRAFT) {
+    if (
+      user.role === UserRole.AUTHOR &&
+      current.status !== NewsletterStatus.DRAFT
+    ) {
       throw new ForbiddenException('Authors can only update their own drafts');
     }
 
@@ -194,9 +206,13 @@ export class NewslettersService {
       }
     }
 
-    const nextTitle = dto.title !== undefined ? dto.title.trim() : current.title;
-    const shouldUpdateSlug = dto.title !== undefined && dto.title.trim() !== current.title;
-    const nextSlug = shouldUpdateSlug ? await this.generateUniqueSlug(nextTitle, id) : current.slug;
+    const nextTitle =
+      dto.title !== undefined ? dto.title.trim() : current.title;
+    const shouldUpdateSlug =
+      dto.title !== undefined && dto.title.trim() !== current.title;
+    const nextSlug = shouldUpdateSlug
+      ? await this.generateUniqueSlug(nextTitle, id)
+      : current.slug;
 
     const updateData: Prisma.NewsletterUpdateInput = {};
 
@@ -315,7 +331,10 @@ export class NewslettersService {
     });
   }
 
-  private async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
+  private async generateUniqueSlug(
+    title: string,
+    excludeId?: string,
+  ): Promise<string> {
     const baseSlug = this.slugify(title);
     let attempt = baseSlug || 'newsletter';
     let counter = 1;
