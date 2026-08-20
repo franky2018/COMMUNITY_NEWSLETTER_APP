@@ -12,7 +12,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import type { User } from '../../generated/prisma/client';
 
-export type SafeUser = Omit<User, 'passwordHash'>;
+export type SafeUser = Omit<
+  User,
+  'passwordHash' | 'passwordResetTokenHash' | 'passwordResetExpiresAt'
+>;
 
 const SALT_ROUNDS = 12;
 const safeUserSelect = {
@@ -143,6 +146,66 @@ export class UsersService {
       data: { tokenVersion: { increment: 1 } },
       select: safeUserSelect,
     });
+  }
+
+  findByEmailForReset(
+    email: string,
+  ): Promise<{ id: string; email: string; isActive: boolean } | null> {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, isActive: true },
+    });
+  }
+
+  async setPasswordResetToken(
+    id: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: expiresAt,
+      },
+      select: { id: true },
+    });
+  }
+
+  findByActiveResetTokenHash(
+    tokenHash: string,
+  ): Promise<{ id: string } | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+  }
+
+  async completePasswordReset(
+    tokenHash: string,
+    newPassword: string,
+  ): Promise<number> {
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // updateMany gated on the unexpired hash makes the token single-use: the
+    // first reset clears it, so any replay matches zero rows. Bumping
+    // tokenVersion invalidates every outstanding access and refresh token.
+    const result = await this.prisma.user.updateMany({
+      where: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: { gt: new Date() },
+      },
+      data: {
+        passwordHash,
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+        tokenVersion: { increment: 1 },
+      },
+    });
+    return result.count;
   }
 
   private async assertManageableTarget(
