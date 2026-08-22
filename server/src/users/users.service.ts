@@ -4,17 +4,23 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { Prisma } from '../../generated/prisma/client';
 import { UserRole } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
+import { assertOwnedCloudinaryUrl } from '../media/cloudinary-url.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import type { User } from '../../generated/prisma/client';
 
 export type SafeUser = Omit<
   User,
-  'passwordHash' | 'passwordResetTokenHash' | 'passwordResetExpiresAt'
+  | 'passwordHash'
+  | 'passwordResetTokenHash'
+  | 'passwordResetExpiresAt'
+  | 'emailVerificationTokenHash'
+  | 'emailVerificationExpiresAt'
 >;
 
 const SALT_ROUNDS = 12;
@@ -22,16 +28,21 @@ const safeUserSelect = {
   id: true,
   email: true,
   name: true,
+  avatarUrl: true,
   role: true,
   isActive: true,
   tokenVersion: true,
+  emailVerified: true,
   createdAt: true,
   updatedAt: true,
 } as const;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async create(dto: CreateUserDto): Promise<SafeUser> {
     if (dto.role === UserRole.ADMIN) {
@@ -73,6 +84,15 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
+  findByIdWithHash(
+    id: string,
+  ): Promise<{ id: string; passwordHash: string } | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, passwordHash: true },
+    });
+  }
+
   findById(id: string): Promise<SafeUser | null> {
     return this.prisma.user.findUnique({
       where: { id },
@@ -104,6 +124,35 @@ export class UsersService {
     return user;
   }
 
+    async updateProfile(
+    userId: string,
+    data: { name?: string; avatarUrl?: string | null },
+  ): Promise<SafeUser> {
+    const updateData: Prisma.UserUpdateInput = {};
+
+    if (data.name !== undefined) {
+      updateData.name = data.name.trim();
+    }
+
+    if (data.avatarUrl !== undefined) {
+      if (data.avatarUrl) {
+        assertOwnedCloudinaryUrl(
+          data.avatarUrl,
+          this.config.getOrThrow<string>('CLOUDINARY_CLOUD_NAME'),
+        );
+        updateData.avatarUrl = data.avatarUrl;
+      } else {
+        updateData.avatarUrl = null;
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: safeUserSelect,
+    });
+  }
+
   async updateRole(
     actingUserId: string,
     id: string,
@@ -114,7 +163,6 @@ export class UsersService {
     }
     await this.assertManageableTarget(actingUserId, id);
 
-    // Role is embedded in issued access tokens; bump tokenVersion to revoke stale ones.
     return this.prisma.user.update({
       where: { id },
       data: { role, tokenVersion: { increment: 1 } },
@@ -133,7 +181,6 @@ export class UsersService {
       where: { id },
       data: {
         isActive,
-        // Deactivation revokes existing sessions; reactivation leaves tokens as-is.
         ...(isActive ? {} : { tokenVersion: { increment: 1 } }),
       },
       select: safeUserSelect,
@@ -190,9 +237,6 @@ export class UsersService {
   ): Promise<number> {
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-    // updateMany gated on the unexpired hash makes the token single-use: the
-    // first reset clears it, so any replay matches zero rows. Bumping
-    // tokenVersion invalidates every outstanding access and refresh token.
     const result = await this.prisma.user.updateMany({
       where: {
         passwordResetTokenHash: tokenHash,
@@ -203,6 +247,45 @@ export class UsersService {
         passwordResetTokenHash: null,
         passwordResetExpiresAt: null,
         tokenVersion: { increment: 1 },
+      },
+    });
+    return result.count;
+  }
+
+  async changePassword(id: string, newPassword: string): Promise<void> {
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash, tokenVersion: { increment: 1 } },
+      select: { id: true },
+    });
+  }
+
+  async setEmailVerificationToken(
+    id: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        emailVerificationTokenHash: tokenHash,
+        emailVerificationExpiresAt: expiresAt,
+      },
+      select: { id: true },
+    });
+  }
+
+  async completeEmailVerification(tokenHash: string): Promise<number> {
+    const result = await this.prisma.user.updateMany({
+      where: {
+        emailVerificationTokenHash: tokenHash,
+        emailVerificationExpiresAt: { gt: new Date() },
+      },
+      data: {
+        emailVerified: true,
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
       },
     });
     return result.count;

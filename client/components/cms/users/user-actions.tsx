@@ -4,33 +4,23 @@ import { useState } from "react";
 
 import { apiClient } from "@/lib/api/client";
 import type { User } from "@/types/api";
+import { Button, Card, CardBody, CardHeader, CardTitle, ConfirmDialog, useToast } from "@/components/ui";
 import { getUserErrorMessage } from "./user-errors";
 import type { AssignableRole } from "./user-form";
 
 type UserActionsProps = {
   user: User;
   currentUserId: string | null;
-  onChanged: (updated: User, message: string) => void;
+  onChanged: (updated: User) => void;
   onError: (message: string) => void;
 };
 
 type Pending = "none" | "role" | "status";
 
-const ROLE_LABELS: Record<User["role"], string> = {
-  ADMIN: "Admin",
-  EDITOR: "Editor",
-  AUTHOR: "Author",
-};
-
-const buttonBase =
-  "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
-const neutralButton = `${buttonBase} border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10`;
-const dangerButton = `${buttonBase} border-red-500/40 text-red-600 hover:bg-red-500/10 dark:text-red-400`;
-const primaryButton = `${buttonBase} border-transparent bg-foreground text-background hover:opacity-90`;
-
-const rowLabel = "text-xs font-medium uppercase tracking-wide text-zinc-500";
+const rowLabel = "text-xs font-medium uppercase tracking-wide text-muted";
 
 export function UserActions({ user, currentUserId, onChanged, onError }: UserActionsProps) {
+  const { toast } = useToast();
   const [confirming, setConfirming] = useState<Pending>("none");
   const [pending, setPending] = useState<Pending>("none");
 
@@ -41,14 +31,18 @@ export function UserActions({ user, currentUserId, onChanged, onError }: UserAct
   // Mirrors the backend: admins can't be edited here and you can't modify yourself.
   if (isAdminTarget || isSelf) {
     return (
-      <div className="mt-8 rounded-lg border border-black/10 p-5 text-sm dark:border-white/15">
-        <h2 className="text-sm font-semibold">Manage user</h2>
-        <p className="mt-2 text-zinc-500">
-          {isSelf
-            ? "You can't change your own role or status."
-            : "Admin accounts can't be modified here."}
-        </p>
-      </div>
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Manage user</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <p className="text-sm text-muted">
+            {isSelf
+              ? "You can't change your own role or status."
+              : "Admin accounts can't be modified here."}
+          </p>
+        </CardBody>
+      </Card>
     );
   }
 
@@ -64,7 +58,8 @@ export function UserActions({ user, currentUserId, onChanged, onError }: UserAct
         { role: otherRole },
         { requiresAuth: true },
       );
-      onChanged(updated, `Role changed to ${ROLE_LABELS[updated.role]}.`);
+      onChanged(updated);
+      toast({ title: `Role changed to ${updated.role}.`, variant: "success" });
     } catch (error) {
       onError(getUserErrorMessage(error, "Unable to change this user's role."));
     } finally {
@@ -83,7 +78,8 @@ export function UserActions({ user, currentUserId, onChanged, onError }: UserAct
         { isActive: nextActive },
         { requiresAuth: true },
       );
-      onChanged(updated, nextActive ? "User activated." : "User deactivated.");
+      onChanged(updated);
+      toast({ title: nextActive ? "User activated." : "User deactivated.", variant: "success" });
     } catch (error) {
       onError(
         getUserErrorMessage(
@@ -98,92 +94,65 @@ export function UserActions({ user, currentUserId, onChanged, onError }: UserAct
   }
 
   return (
-    <div className="mt-8 rounded-lg border border-black/10 p-5 dark:border-white/15">
-      <h2 className="text-sm font-semibold">Manage user</h2>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className={rowLabel}>Role</p>
-          <p className="mt-1 text-sm">Currently {ROLE_LABELS[user.role]}</p>
+    <Card className="mt-8">
+      <CardHeader>
+        <CardTitle>Manage user</CardTitle>
+      </CardHeader>
+      <CardBody>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className={rowLabel}>Role</p>
+            <p className="mt-1 text-sm text-body">Currently {user.role}</p>
+          </div>
+          <Button variant="secondary" size="sm" disabled={busy} onClick={() => setConfirming("role")}>
+            Change to {otherRole}
+          </Button>
         </div>
 
-        {confirming === "role" ? (
-          <span className="flex flex-wrap items-center justify-end gap-2">
-            <span className="text-xs text-zinc-500">
-              Change this user&rsquo;s role from {ROLE_LABELS[user.role]} to{" "}
-              {ROLE_LABELS[otherRole]}?
-            </span>
-            <button type="button" className={primaryButton} disabled={busy} onClick={changeRole}>
-              {pending === "role" ? "Saving…" : "Confirm"}
-            </button>
-            <button
-              type="button"
-              className={neutralButton}
-              disabled={busy}
-              onClick={() => setConfirming("none")}
-            >
-              Cancel
-            </button>
-          </span>
-        ) : (
-          <button
-            type="button"
-            className={neutralButton}
-            disabled={busy}
-            onClick={() => setConfirming("role")}
-          >
-            Change to {ROLE_LABELS[otherRole]}
-          </button>
-        )}
-      </div>
+        <div className="my-4 border-t border-border" />
 
-      <div className="my-4 border-t border-black/10 dark:border-white/10" />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className={rowLabel}>Status</p>
-          <p className="mt-1 text-sm">{user.isActive ? "Active" : "Inactive"}</p>
-        </div>
-
-        {confirming === "status" ? (
-          <span className="flex flex-wrap items-center justify-end gap-2">
-            <span className="text-xs text-zinc-500">
-              {user.isActive
-                ? "Deactivate this user? They'll no longer be able to sign in."
-                : "Activate this user?"}
-            </span>
-            <button
-              type="button"
-              className={user.isActive ? dangerButton : primaryButton}
-              disabled={busy}
-              onClick={() => setActive(!user.isActive)}
-            >
-              {pending === "status"
-                ? user.isActive
-                  ? "Deactivating…"
-                  : "Activating…"
-                : "Confirm"}
-            </button>
-            <button
-              type="button"
-              className={neutralButton}
-              disabled={busy}
-              onClick={() => setConfirming("none")}
-            >
-              Cancel
-            </button>
-          </span>
-        ) : (
-          <button
-            type="button"
-            className={user.isActive ? dangerButton : primaryButton}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className={rowLabel}>Status</p>
+            <p className="mt-1 text-sm text-body">{user.isActive ? "Active" : "Inactive"}</p>
+          </div>
+          <Button
+            variant={user.isActive ? "danger" : "primary"}
+            size="sm"
             disabled={busy}
             onClick={() => setConfirming("status")}
           >
             {user.isActive ? "Deactivate" : "Activate"}
-          </button>
-        )}
-      </div>
-    </div>
+          </Button>
+        </div>
+      </CardBody>
+
+      <ConfirmDialog
+        open={confirming === "role"}
+        title="Change this user’s role?"
+        description={`This user’s role will change from ${user.role} to ${otherRole}.`}
+        confirmLabel="Change role"
+        loadingLabel="Saving…"
+        loading={pending === "role"}
+        onConfirm={changeRole}
+        onCancel={() => setConfirming("none")}
+      />
+
+      <ConfirmDialog
+        open={confirming === "status"}
+        title={user.isActive ? "Deactivate this user?" : "Activate this user?"}
+        description={
+          user.isActive
+            ? "They’ll no longer be able to sign in."
+            : "They’ll be able to sign in again."
+        }
+        confirmLabel={user.isActive ? "Deactivate" : "Activate"}
+        loadingLabel={user.isActive ? "Deactivating…" : "Activating…"}
+        confirmVariant={user.isActive ? "danger" : "primary"}
+        loading={pending === "status"}
+        onConfirm={() => setActive(!user.isActive)}
+        onCancel={() => setConfirming("none")}
+      />
+    </Card>
   );
 }

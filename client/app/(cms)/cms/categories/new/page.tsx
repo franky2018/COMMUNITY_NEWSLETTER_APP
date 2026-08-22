@@ -9,6 +9,7 @@ import {
   CategoryForm,
   type CategoryFormValues,
 } from "@/components/cms/categories/category-form";
+import { AccessDenied } from "@/components/cms/access-denied";
 import type { Category } from "@/types/api";
 
 export default function NewCategoryPage() {
@@ -32,27 +33,26 @@ export default function NewCategoryPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="text-sm text-zinc-500">
-        <Link href="/cms/categories" className="hover:underline">
+      <div className="text-sm text-muted">
+        <Link href="/cms/categories" className="transition-colors hover:text-primary">
           Categories
         </Link>
         <span className="px-1">/</span>
-        <span>New</span>
+        <span className="text-heading">New</span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-semibold">New Category</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <h1 className="mt-2 font-serif text-2xl font-semibold text-heading">New Category</h1>
+      <p className="mt-1 text-sm text-muted">
         Add a category to group related newsletters. The slug is generated automatically.
       </p>
 
       {role && !canManage ? (
-        <div className="mt-8 rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-          <p className="font-medium">You don’t have permission to create categories.</p>
-          <p className="mt-1">Ask an editor or admin if you need a new category.</p>
-          <Link href="/cms/categories" className="mt-4 inline-block hover:underline">
-            ← Back to categories
-          </Link>
-        </div>
+        <AccessDenied
+          title="You don’t have permission to create categories."
+          description="Ask an editor or admin if you need a new category."
+          backHref="/cms/categories"
+          backLabel="Back to categories"
+        />
       ) : (
         <CategoryForm
           submitLabel="Create Category"

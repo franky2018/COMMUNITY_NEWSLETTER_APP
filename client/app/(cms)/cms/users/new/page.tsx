@@ -32,16 +32,16 @@ export default function NewUserPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="text-sm text-zinc-500">
-        <Link href="/cms/users" className="hover:underline">
+      <div className="text-sm text-muted">
+        <Link href="/cms/users" className="transition-colors hover:text-primary">
           Users
         </Link>
         <span className="px-1">/</span>
-        <span>New</span>
+        <span className="text-heading">New</span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-semibold">New User</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <h1 className="mt-2 font-serif text-2xl font-semibold text-heading">New User</h1>
+      <p className="mt-1 text-sm text-muted">
         Create an account for a team member. New accounts are active immediately.
       </p>
 

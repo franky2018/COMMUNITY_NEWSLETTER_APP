@@ -27,6 +27,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (partial: Partial<User>) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -91,6 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authenticated");
   }, []);
 
+  const updateUser = useCallback((partial: Partial<User>) => {
+    setUser((current) => (current ? { ...current, ...partial } : current));
+  }, []);
+
   const logout = useCallback(async () => {
     if (loggingOutRef.current) {
       return;
@@ -98,10 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loggingOutRef.current = true;
 
     try {
-      // Best-effort backend revocation (bumps tokenVersion). Never block local logout on it.
-      await apiClient.post("/auth/logout", undefined, { requiresAuth: true });
+        await apiClient.post("/auth/logout", undefined, { requiresAuth: true });
     } catch {
-      // A network/API failure must not strand the user in the CMS.
+      
     } finally {
       clearAuthTokens();
       setUser(null);
@@ -119,8 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: status === "authenticated",
       login,
       logout,
+      updateUser,
     }),
-    [user, status, login, logout],
+    [user, status, login, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

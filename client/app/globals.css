@@ -3,24 +3,101 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Surfaces */
+  --canvas: #f7f8fa;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --input: #d1d5db;
+
+  /* Text */
+  --heading: #1a2233;
+  --body: #3f4658;
+  --muted: #8b93a4;
+
+  /* Brand + actions */
+  --primary: #2c6ca6;
+  --primary-hover: #225781;
+  --on-primary: #ffffff;
+  --publish: #b4560f;
+  --publish-hover: #97480c;
+  --on-publish: #ffffff;
+  --danger: #c53030;
+  --danger-hover: #a52626;
+  --on-danger: #ffffff;
+  --success: #16a34a;
+  --warning: #b45309;
+
+  /* Soft accent fills — translucent so they read on light and dark alike */
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --danger-soft: color-mix(in srgb, var(--danger) 12%, transparent);
+  --success-soft: color-mix(in srgb, var(--success) 14%, transparent);
+  --warning-soft: color-mix(in srgb, var(--warning) 14%, transparent);
+
+  /* Sidebar chrome — dark in every mode */
+  --sidebar: #1b2536;
+  --sidebar-active: #26324a;
+  --sidebar-muted: #9aa7bd;
+  --on-sidebar: #f4f6fa;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-input: var(--input);
+
+  --color-heading: var(--heading);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-publish: var(--publish);
+  --color-publish-hover: var(--publish-hover);
+  --color-on-publish: var(--on-publish);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-on-danger: var(--on-danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-on-sidebar: var(--on-sidebar);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-source-serif);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    --canvas: #0b0f17;
+    --card: #121826;
+    --border: #232a3a;
+    --input: #333c52;
+
+    --heading: #f1f4f9;
+    --body: #c7cdda;
+    --muted: #8b93a4;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }

@@ -10,6 +10,8 @@ import { UserActions } from "@/components/cms/users/user-actions";
 import { UserRoleBadge } from "@/components/cms/users/user-role-badge";
 import { UserStatusBadge } from "@/components/cms/users/user-status-badge";
 import { UserNoAccess } from "@/components/cms/users/user-access";
+import { AccessDenied } from "@/components/cms/access-denied";
+import { Alert } from "@/components/ui";
 import type { User } from "@/types/api";
 
 type LoadState = "loading" | "loaded" | "not-found" | "forbidden" | "error";
@@ -32,7 +34,6 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<LoadState>("loading");
   const [actionError, setActionError] = useState("");
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id || !canManage) {
@@ -79,54 +80,51 @@ export default function UserDetailPage() {
     return () => controller.abort();
   }, [id, canManage]);
 
-  function handleChanged(updated: User, message: string) {
+  function handleChanged(updated: User) {
     setUser(updated);
     setActionError("");
-    setSuccessMessage(message);
-  }
-
-  function handleError(message: string) {
-    setActionError(message);
-    if (message) {
-      setSuccessMessage(null);
-    }
   }
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="text-sm text-zinc-500">
-        <Link href="/cms/users" className="hover:underline">
+      <div className="text-sm text-muted">
+        <Link href="/cms/users" className="transition-colors hover:text-primary">
           Users
         </Link>
         <span className="px-1">/</span>
-        <span className="text-foreground">Details</span>
+        <span className="text-heading">Details</span>
       </div>
 
       {role && !canManage ? (
         <UserNoAccess />
       ) : state === "loading" ? (
-        <p className="mt-8 text-sm text-zinc-500">Loading user…</p>
+        <p className="mt-8 text-sm text-muted">Loading user…</p>
       ) : state === "not-found" ? (
-        <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-          <p className="font-medium">User not found</p>
-          <p className="mt-1 text-zinc-500">It may have been removed or the link is incorrect.</p>
-          <Link href="/cms/users" className="mt-4 inline-block text-sm hover:underline">
+        <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p className="font-serif text-lg font-semibold text-heading">User not found</p>
+          <p className="mt-1 text-sm text-muted">It may have been removed or the link is incorrect.</p>
+          <Link
+            href="/cms/users"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+          >
             ← Back to users
           </Link>
         </div>
       ) : state === "forbidden" ? (
-        <div className="mt-8 rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-          <p className="font-medium">You don&rsquo;t have access to this user.</p>
-          <p className="mt-1">You may not have permission to view this record.</p>
-          <Link href="/cms/users" className="mt-4 inline-block hover:underline">
-            ← Back to users
-          </Link>
-        </div>
+        <AccessDenied
+          title="You don’t have access to this user."
+          description="You may not have permission to view this record."
+          backHref="/cms/users"
+          backLabel="Back to users"
+        />
       ) : state === "error" || !user ? (
-        <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-          <p className="font-medium">Unable to load this user.</p>
-          <p className="mt-1 text-zinc-500">Something went wrong. Please try again.</p>
-          <Link href="/cms/users" className="mt-4 inline-block hover:underline">
+        <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p className="font-serif text-lg font-semibold text-heading">Unable to load this user.</p>
+          <p className="mt-1 text-sm text-muted">Something went wrong. Please try again.</p>
+          <Link
+            href="/cms/users"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+          >
             ← Back to users
           </Link>
         </div>
@@ -134,31 +132,19 @@ export default function UserDetailPage() {
         <>
           <div className="mt-2 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="truncate text-2xl font-semibold">{user.name}</h1>
+              <h1 className="truncate font-serif text-2xl font-semibold text-heading">{user.name}</h1>
               <UserRoleBadge role={user.role} />
               <UserStatusBadge isActive={user.isActive} />
             </div>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-muted">
               <span className="select-all">{user.email}</span>
             </p>
           </div>
 
-          {successMessage ? (
-            <div
-              role="status"
-              className="mt-4 rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-            >
-              {successMessage}
-            </div>
-          ) : null}
-
           {actionError ? (
-            <div
-              role="alert"
-              className="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-            >
+            <Alert variant="error" className="mt-4">
               {actionError}
-            </div>
+            </Alert>
           ) : null}
 
           <dl className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -180,7 +166,7 @@ export default function UserDetailPage() {
             user={user}
             currentUserId={currentUser?.id ?? null}
             onChanged={handleChanged}
-            onError={handleError}
+            onError={setActionError}
           />
         </>
       )}
@@ -191,8 +177,8 @@ export default function UserDetailPage() {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</dt>
-      <dd className="mt-1 text-sm">{children}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-1 text-sm text-heading">{children}</dd>
     </div>
   );
 }

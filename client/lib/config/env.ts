@@ -6,7 +6,7 @@ function normalizeBaseUrl(url: string): string {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL;
+const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL;
 
 if (isProduction && !configuredApiBaseUrl) {
   throw new Error(
@@ -16,6 +16,9 @@ if (isProduction && !configuredApiBaseUrl) {
 
 const rawApiBaseUrl = configuredApiBaseUrl ?? DEFAULT_API_BASE_URL;
 
+const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME ?? "";
+
 export const env = {
   apiBaseUrl: normalizeBaseUrl(rawApiBaseUrl),
+  cloudinaryCloudName,
 };

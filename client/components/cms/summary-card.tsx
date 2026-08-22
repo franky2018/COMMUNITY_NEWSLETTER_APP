@@ -1,94 +1,65 @@
 import Link from "next/link";
 import type { Route } from "next";
+import type { ReactNode } from "react";
 
-export type SummaryCardItem = {
-  label: string;
-  value: number;
-};
+import { Button, Skeleton } from "@/components/ui";
 
 type SummaryCardState = "loading" | "loaded" | "error";
 
 type SummaryCardProps = {
-  title: string;
+  label: string;
   href?: Route;
   state?: SummaryCardState;
   value?: number | null;
+  delta?: number | null;
   caption?: string;
-  items?: SummaryCardItem[];
+  icon?: ReactNode;
   onRetry?: () => void;
 };
 
-const containerClass =
-  "block rounded-xl border border-black/10 bg-black/[.02] p-5 dark:border-white/15 dark:bg-white/[.03]";
+const containerClass = "rounded-xl border border-border bg-card p-5 shadow-sm";
 
-const skeletonBar = "animate-pulse rounded bg-black/10 dark:bg-white/10";
-
-function LoadingBody({ title }: { title: string }) {
+function Header({ label, icon }: { label: string; icon?: ReactNode }) {
   return (
-    <>
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{title}</span>
-        <span className={`inline-block h-7 w-12 ${skeletonBar}`} />
-      </div>
-      <div className={`mt-4 h-3 w-2/3 ${skeletonBar}`} />
-    </>
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted">{label}</span>
+      {icon ? <span className="text-muted">{icon}</span> : null}
+    </div>
   );
 }
 
-function LoadedBody({
-  title,
-  value,
-  caption,
-  items,
-}: Pick<SummaryCardProps, "title" | "value" | "caption" | "items">) {
-  return (
-    <>
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{title}</span>
-        <span className="text-2xl font-semibold tabular-nums">{value ?? 0}</span>
-      </div>
-      {items && items.length > 0 ? (
-        <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
-          {items.map((item) => (
-            <div key={item.label}>
-              <dt className="inline">{item.label}: </dt>
-              <dd className="inline font-medium tabular-nums text-zinc-700 dark:text-zinc-300">
-                {item.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : caption ? (
-        <p className="mt-3 text-xs text-zinc-500">{caption}</p>
-      ) : null}
-    </>
-  );
+function Footnote({ delta, caption }: { delta?: number | null; caption?: string }) {
+  if (delta !== null && delta !== undefined) {
+    if (delta > 0) {
+      return <p className="mt-2 text-xs font-medium text-success">+{delta} this month</p>;
+    }
+    return <p className="mt-2 text-xs text-muted">No change this month</p>;
+  }
+  if (caption) {
+    return <p className="mt-2 text-xs text-muted">{caption}</p>;
+  }
+  return null;
 }
 
 export function SummaryCard({
-  title,
+  label,
   href,
   state = "loaded",
   value,
+  delta,
   caption,
-  items,
+  icon,
   onRetry,
 }: SummaryCardProps) {
   if (state === "error") {
     return (
       <div className={containerClass}>
-        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{title}</span>
-        <p className="mt-3 text-xs text-red-600 dark:text-red-400">
-          Couldn’t load {title.toLowerCase()}.
-        </p>
+        <Header label={label} icon={icon} />
+        <p className="mt-3 text-xs text-danger">Couldn’t load {label.toLowerCase()}.</p>
         {onRetry ? (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="mt-3 rounded-md border border-black/15 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10"
-          >
+          <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
             Retry
-          </button>
+          </Button>
         ) : null}
       </div>
     );
@@ -96,16 +67,26 @@ export function SummaryCard({
 
   const body =
     state === "loading" ? (
-      <LoadingBody title={title} />
+      <>
+        <Header label={label} icon={icon} />
+        <Skeleton className="mt-3 h-9 w-16" />
+        <Skeleton className="mt-2 h-3 w-24" />
+      </>
     ) : (
-      <LoadedBody title={title} value={value} caption={caption} items={items} />
+      <>
+        <Header label={label} icon={icon} />
+        <div className="mt-3 font-serif text-3xl font-semibold tabular-nums text-heading">
+          {value ?? 0}
+        </div>
+        <Footnote delta={delta} caption={caption} />
+      </>
     );
 
   if (href) {
     return (
       <Link
         href={href}
-        className={`${containerClass} transition-colors hover:bg-black/[.04] dark:hover:bg-white/[.06]`}
+        className={`${containerClass} block transition-colors hover:border-primary/40`}
       >
         {body}
       </Link>

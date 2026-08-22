@@ -33,16 +33,16 @@ export default function NewSubscriberPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="text-sm text-zinc-500">
-        <Link href="/cms/subscribers" className="hover:underline">
+      <div className="text-sm text-muted">
+        <Link href="/cms/subscribers" className="transition-colors hover:text-primary">
           Subscribers
         </Link>
         <span className="px-1">/</span>
-        <span>New</span>
+        <span className="text-heading">New</span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-semibold">Add Subscriber</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <h1 className="mt-2 font-serif text-2xl font-semibold text-heading">Add Subscriber</h1>
+      <p className="mt-1 text-sm text-muted">
         Add someone to the newsletter manually. New addresses are added as active.
       </p>
 

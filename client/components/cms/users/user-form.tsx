@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 
 import type { UserRole } from "@/types/api";
+import { Alert, Button, Input, Label, Select } from "@/components/ui";
 import { getUserErrorMessage } from "./user-errors";
 
 export type AssignableRole = Exclude<UserRole, "ADMIN">;
@@ -35,9 +36,6 @@ const ROLE_OPTIONS: { value: AssignableRole; label: string; hint: string }[] = [
     hint: "Can manage all newsletters, categories, and subscribers.",
   },
 ];
-
-const inputClass =
-  "w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50";
 
 type FieldErrors = { name?: string; email?: string; password?: string };
 
@@ -113,20 +111,13 @@ export function UserForm({ submitLabel, submittingLabel, onSave }: UserFormProps
 
   return (
     <form className="mt-8 max-w-2xl space-y-5" onSubmit={handleSubmit} noValidate>
-      {submitError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
-          {submitError}
-        </div>
-      ) : null}
+      {submitError ? <Alert variant="error">{submitError}</Alert> : null}
 
-      <div className="space-y-1">
-        <label htmlFor="name" className="block text-sm font-medium">
-          Name <span className="text-red-500">*</span>
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="name" required>
+          Name
+        </Label>
+        <Input
           id="name"
           name="name"
           type="text"
@@ -138,22 +129,22 @@ export function UserForm({ submitLabel, submittingLabel, onSave }: UserFormProps
             setFieldErrors((prev) => ({ ...prev, name: undefined }));
             setSubmitError(null);
           }}
+          error={Boolean(fieldErrors.name)}
           aria-invalid={Boolean(fieldErrors.name)}
           aria-describedby={fieldErrors.name ? "name-error" : undefined}
-          className={inputClass}
         />
         {fieldErrors.name ? (
-          <p id="name-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="name-error" role="alert" className="text-xs text-danger">
             {fieldErrors.name}
           </p>
         ) : null}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="email" className="block text-sm font-medium">
-          Email <span className="text-red-500">*</span>
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="email" required>
+          Email
+        </Label>
+        <Input
           id="email"
           name="email"
           type="email"
@@ -165,24 +156,24 @@ export function UserForm({ submitLabel, submittingLabel, onSave }: UserFormProps
             setFieldErrors((prev) => ({ ...prev, email: undefined }));
             setSubmitError(null);
           }}
+          error={Boolean(fieldErrors.email)}
           aria-invalid={Boolean(fieldErrors.email)}
           aria-describedby={fieldErrors.email ? "email-error" : undefined}
-          className={inputClass}
         />
         {fieldErrors.email ? (
-          <p id="email-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="email-error" role="alert" className="text-xs text-danger">
             {fieldErrors.email}
           </p>
         ) : (
-          <p className="text-xs text-zinc-500">Used to sign in. Must be unique.</p>
+          <p className="text-xs text-muted">Used to sign in. Must be unique.</p>
         )}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="password" className="block text-sm font-medium">
-          Password <span className="text-red-500">*</span>
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="password" required>
+          Password
+        </Label>
+        <Input
           id="password"
           name="password"
           type="password"
@@ -194,26 +185,24 @@ export function UserForm({ submitLabel, submittingLabel, onSave }: UserFormProps
             setFieldErrors((prev) => ({ ...prev, password: undefined }));
             setSubmitError(null);
           }}
+          error={Boolean(fieldErrors.password)}
           aria-invalid={Boolean(fieldErrors.password)}
           aria-describedby={fieldErrors.password ? "password-error" : undefined}
-          className={inputClass}
         />
         {fieldErrors.password ? (
-          <p id="password-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="password-error" role="alert" className="text-xs text-danger">
             {fieldErrors.password}
           </p>
         ) : (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted">
             At least {PASSWORD_MIN} characters. Share it with the user securely.
           </p>
         )}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="role" className="block text-sm font-medium">
-          Role
-        </label>
-        <select
+      <div className="space-y-1.5">
+        <Label htmlFor="role">Role</Label>
+        <Select
           id="role"
           name="role"
           value={role}
@@ -221,25 +210,20 @@ export function UserForm({ submitLabel, submittingLabel, onSave }: UserFormProps
             setRole(event.target.value as AssignableRole);
             setSubmitError(null);
           }}
-          className={inputClass}
         >
           {ROLE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
-        </select>
-        {roleHint ? <p className="text-xs text-zinc-500">{roleHint}</p> : null}
+        </Select>
+        {roleHint ? <p className="text-xs text-muted">{roleHint}</p> : null}
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={submitDisabled}
-          className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitDisabled}>
           {submitting ? submittingLabel : submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   );

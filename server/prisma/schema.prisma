@@ -30,12 +30,17 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  avatarUrl    String?
   role         UserRole @default(AUTHOR)
   isActive     Boolean  @default(true)
   tokenVersion Int      @default(0)
 
   passwordResetTokenHash String?
   passwordResetExpiresAt DateTime?
+
+  emailVerified              Boolean   @default(false)
+  emailVerificationTokenHash String?
+  emailVerificationExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,6 +49,7 @@ model User {
 
   @@index([role])
   @@index([passwordResetTokenHash])
+  @@index([emailVerificationTokenHash])
 }
 
 model Category {
@@ -58,15 +64,16 @@ model Category {
 }
 
 model Newsletter {
-  id          String           @id @default(uuid())
-  title       String
-  slug        String           @unique
-  content     String
-  excerpt     String?
-  status      NewsletterStatus @default(DRAFT)
-  publishedAt DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id               String           @id @default(uuid())
+  title            String
+  slug             String           @unique
+  content          String
+  excerpt          String?
+  featuredImageUrl String?
+  status           NewsletterStatus @default(DRAFT)
+  publishedAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])

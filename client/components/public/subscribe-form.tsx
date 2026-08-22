@@ -4,20 +4,12 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { apiClient } from "@/lib/api/client";
+import { Alert, Button, Input, Label, buttonClasses } from "@/components/ui";
 import { getSubscribeErrorMessage } from "./subscribe-errors";
 
 const EMAIL_MAX = 254;
 const NAME_MAX = 255;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const inputClass =
-  "w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50";
-
-const primaryButtonClass =
-  "rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
-
-const secondaryButtonClass =
-  "rounded-md border border-black/15 px-4 py-2 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10";
 
 type FieldErrors = { email?: string; name?: string };
 
@@ -105,22 +97,19 @@ export function SubscribeForm() {
         ref={confirmationRef}
         tabIndex={-1}
         role="status"
-        className="mt-8 max-w-2xl rounded-xl border border-green-600/40 bg-green-600/10 p-6 outline-none dark:border-green-500/40"
+        className="mt-8 max-w-2xl rounded-xl border border-success/40 bg-success-soft p-6 outline-none"
       >
-        <h2 className="text-xl font-semibold text-green-700 dark:text-green-400">
-          You&rsquo;re subscribed!
-        </h2>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          Thanks for subscribing. You&rsquo;ll receive future community newsletters at this
-          address.
+        <h2 className="font-serif text-xl font-semibold text-heading">You&rsquo;re subscribed!</h2>
+        <p className="mt-2 text-sm text-body">
+          Thanks for subscribing. You&rsquo;ll receive future community newsletters at this address.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/newsletters" className={primaryButtonClass}>
+          <Link href="/newsletters" className={buttonClasses()}>
             Browse newsletters
           </Link>
-          <button type="button" onClick={subscribeAnother} className={secondaryButtonClass}>
+          <Button type="button" variant="secondary" onClick={subscribeAnother}>
             Subscribe another email
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -135,20 +124,13 @@ export function SubscribeForm() {
       aria-busy={submitting}
       noValidate
     >
-      {submitError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
-          {submitError}
-        </div>
-      ) : null}
+      {submitError ? <Alert variant="error">{submitError}</Alert> : null}
 
       <div className="space-y-1">
-        <label htmlFor="email" className="block text-sm font-medium">
-          Email <span className="text-red-500">*</span>
-        </label>
-        <input
+        <Label htmlFor="email" required>
+          Email
+        </Label>
+        <Input
           id="email"
           name="email"
           type="email"
@@ -162,26 +144,24 @@ export function SubscribeForm() {
             setFieldErrors((prev) => ({ ...prev, email: undefined }));
             setSubmitError(null);
           }}
+          error={Boolean(fieldErrors.email)}
           aria-invalid={Boolean(fieldErrors.email)}
           aria-describedby={fieldErrors.email ? "email-error" : "email-hint"}
-          className={inputClass}
         />
         {fieldErrors.email ? (
-          <p id="email-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="email-error" role="alert" className="text-xs text-danger">
             {fieldErrors.email}
           </p>
         ) : (
-          <p id="email-hint" className="text-xs text-zinc-500">
+          <p id="email-hint" className="text-xs text-muted">
             We&rsquo;ll send new community newsletters to this address.
           </p>
         )}
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="name" className="block text-sm font-medium">
-          Name
-        </label>
-        <input
+        <Label htmlFor="name">Name</Label>
+        <Input
           id="name"
           name="name"
           type="text"
@@ -193,25 +173,25 @@ export function SubscribeForm() {
             setFieldErrors((prev) => ({ ...prev, name: undefined }));
             setSubmitError(null);
           }}
+          error={Boolean(fieldErrors.name)}
           aria-invalid={Boolean(fieldErrors.name)}
           aria-describedby={fieldErrors.name ? "name-error" : "name-hint"}
-          className={inputClass}
         />
         {fieldErrors.name ? (
-          <p id="name-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="name-error" role="alert" className="text-xs text-danger">
             {fieldErrors.name}
           </p>
         ) : (
-          <p id="name-hint" className="text-xs text-zinc-500">
+          <p id="name-hint" className="text-xs text-muted">
             Optional.
           </p>
         )}
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        <button type="submit" disabled={submitDisabled} className={primaryButtonClass}>
+        <Button type="submit" disabled={submitDisabled}>
           {submitting ? "Subscribing…" : "Subscribe"}
-        </button>
+        </Button>
       </div>
     </form>
   );
