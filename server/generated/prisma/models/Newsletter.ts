@@ -539,10 +539,6 @@ export type EnumNewsletterStatusFieldUpdateOperationsInput = {
   set?: $Enums.NewsletterStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type NewsletterCreateWithoutAuthorInput = {
   id?: string
   title: string

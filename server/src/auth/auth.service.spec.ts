@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
+import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../../generated/prisma/enums';
 
@@ -55,6 +56,10 @@ describe('AuthService', () => {
         AuthService,
         JwtService,
         { provide: UsersService, useValue: users },
+        {
+          provide: MailService,
+          useValue: { sendPasswordResetEmail: jest.fn() },
+        },
         {
           provide: ConfigService,
           useValue: { getOrThrow: (k: string) => TEST_CONFIG[k] },

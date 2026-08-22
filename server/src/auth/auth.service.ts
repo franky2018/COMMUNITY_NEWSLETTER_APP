@@ -1,7 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
+import { createHash, randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcryptjs';
+import { MailService } from '../mail/mail.service';
 import { UsersService, type SafeUser } from '../users/users.service';
 import type {
   AuthTokens,
@@ -15,6 +22,9 @@ export interface LoginResult extends AuthTokens {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  private static readonly PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
+
   private readonly dummyPasswordHash = bcrypt.hashSync(
     'invalid-user-timing-guard',
     12,
@@ -24,6 +34,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   async validateUser(
@@ -80,6 +91,59 @@ export class AuthService {
 
   async logout(userId: string): Promise<void> {
     await this.users.incrementTokenVersion(userId);
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.users.findByEmailForReset(email);
+    // Silently no-op for unknown or inactive accounts: the controller returns
+    // an identical response regardless, so the endpoint cannot be used to
+    // probe which emails are registered.
+    if (!user || !user.isActive) {
+      return;
+    }
+
+    const rawToken = randomBytes(32).toString('base64url');
+    const tokenHash = this.hashResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + AuthService.PASSWORD_RESET_TTL_MS);
+    await this.users.setPasswordResetToken(user.id, tokenHash, expiresAt);
+
+    const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
+    const resetUrl = `${frontendUrl}/auth/reset-password?token=${rawToken}`;
+
+    try {
+      await this.mail.sendPasswordResetEmail(user.email, resetUrl);
+    } catch {
+      // A delivery failure must neither surface to the caller (it would leak
+      // account existence) nor throw. Log without the token/URL and let the
+      // generic success response stand.
+      this.logger.error(
+        `Failed to dispatch password reset email for user ${user.id}`,
+      );
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const tokenHash = this.hashResetToken(token);
+
+    // Cheap rejection first so invalid tokens never trigger a bcrypt hash.
+    const match = await this.users.findByActiveResetTokenHash(tokenHash);
+    if (!match) {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+
+    const updated = await this.users.completePasswordReset(
+      tokenHash,
+      newPassword,
+    );
+    // Zero rows means the token was consumed or expired between the lookup and
+    // the write (e.g. a concurrent reset) — treat it the same as invalid.
+    if (updated === 0) {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+  }
+
+  private hashResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   private async issueTokens(user: SafeUser): Promise<AuthTokens> {
