@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 
+import { buttonClasses } from "@/components/ui";
+
 type NavLink = {
   label: string;
   href: Route;
@@ -14,11 +16,8 @@ const NAV_LINKS: readonly NavLink[] = [
   { label: "Newsletters", href: "/newsletters" },
 ];
 
-const primaryCtaClass =
-  "rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90";
-
 const navLinkClass =
-  "rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-black/5 hover:text-foreground dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-foreground";
+  "rounded-md px-3 py-2 text-sm font-medium text-body transition-colors hover:bg-black/[.04] hover:text-heading dark:hover:bg-white/10";
 
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
@@ -26,10 +25,21 @@ export function PublicHeader() {
   const close = () => setOpen(false);
 
   return (
-    <header className="border-b border-black/10 dark:border-white/15">
+    <header className="sticky top-0 z-30 border-b border-border bg-card">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
-        <Link href="/" onClick={close} className="font-semibold tracking-tight">
-          Community Newsletter
+        <Link
+          href="/"
+          onClick={close}
+          className="flex items-center gap-2.5"
+          aria-label="Community Newsletter home"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-on-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 4h13a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4Z" />
+              <path d="M8 8h7M8 12h7M8 16h4" />
+            </svg>
+          </span>
+          <span className="font-serif text-base font-semibold text-heading">Community Newsletter</span>
         </Link>
 
         <nav aria-label="Primary" className="ml-auto hidden items-center gap-1 sm:flex">
@@ -38,7 +48,7 @@ export function PublicHeader() {
               {link.label}
             </Link>
           ))}
-          <Link href="/subscribe" className={`ml-2 ${primaryCtaClass}`}>
+          <Link href="/subscribe" className={buttonClasses({ className: "ml-2" })}>
             Subscribe
           </Link>
         </nav>
@@ -48,7 +58,7 @@ export function PublicHeader() {
           onClick={() => setOpen((value) => !value)}
           aria-label={open ? "Close navigation" : "Open navigation"}
           aria-expanded={open}
-          className="ml-auto rounded-md p-2 transition-colors hover:bg-black/5 dark:hover:bg-white/10 sm:hidden"
+          className="ml-auto rounded-md p-2 text-body transition-colors hover:bg-black/[.04] dark:hover:bg-white/10 sm:hidden"
         >
           <svg
             width="20"
@@ -68,7 +78,7 @@ export function PublicHeader() {
       {open ? (
         <nav
           aria-label="Primary mobile"
-          className="border-t border-black/10 px-4 py-3 dark:border-white/15 sm:hidden"
+          className="border-t border-border px-4 py-3 sm:hidden"
         >
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
@@ -76,7 +86,7 @@ export function PublicHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/subscribe" onClick={close} className={`mt-2 text-center ${primaryCtaClass}`}>
+            <Link href="/subscribe" onClick={close} className={buttonClasses({ className: "mt-2 w-full" })}>
               Subscribe
             </Link>
           </div>

@@ -3,11 +3,16 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '../../generated/prisma/client';
 import { NewsletterStatus, UserRole } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { assertOwnedCloudinaryUrl } from '../media/cloudinary-url.util';
+import { SubscribersService } from '../subscribers/subscribers.service';
 import { CreateNewsletterDto } from './dto/create-newsletter.dto';
 import {
   PublicQueryNewsletterDto,
@@ -28,6 +33,7 @@ const newsletterSelect = {
   slug: true,
   content: true,
   excerpt: true,
+  featuredImageUrl: true,
   status: true,
   publishedAt: true,
   createdAt: true,
@@ -40,7 +46,25 @@ const newsletterSelect = {
 
 @Injectable()
 export class NewslettersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(NewslettersService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+    private readonly subscribers: SubscribersService,
+    private readonly config: ConfigService,
+  ) {}
+
+  private resolveFeaturedImageUrl(value: string | null | undefined): string | null {
+    if (!value) {
+      return null;
+    }
+    assertOwnedCloudinaryUrl(
+      value,
+      this.config.getOrThrow<string>('CLOUDINARY_CLOUD_NAME'),
+    );
+    return value;
+  }
 
   async create(dto: CreateNewsletterDto, user: AuthenticatedUser) {
     const title = dto.title.trim();
@@ -64,6 +88,7 @@ export class NewslettersService {
           slug,
           content: dto.content.trim(),
           excerpt: dto.excerpt ? dto.excerpt.trim() : null,
+          featuredImageUrl: this.resolveFeaturedImageUrl(dto.featuredImageUrl),
           status: NewsletterStatus.DRAFT,
           authorId: user.id,
           categoryId: dto.categoryId || null,
@@ -132,6 +157,7 @@ export class NewslettersService {
         slug: true,
         excerpt: true,
         content: true,
+        featuredImageUrl: true,
         status: true,
         publishedAt: true,
         createdAt: true,
@@ -232,6 +258,12 @@ export class NewslettersService {
       updateData.excerpt = dto.excerpt ? dto.excerpt.trim() : null;
     }
 
+    if (dto.featuredImageUrl !== undefined) {
+      updateData.featuredImageUrl = this.resolveFeaturedImageUrl(
+        dto.featuredImageUrl,
+      );
+    }
+
     if (dto.categoryId !== undefined) {
       if (dto.categoryId) {
         updateData.category = { connect: { id: dto.categoryId } };
@@ -277,7 +309,7 @@ export class NewslettersService {
     }
 
     if (newsletter.status === NewsletterStatus.DRAFT) {
-      return this.prisma.newsletter.update({
+      const published = await this.prisma.newsletter.update({
         where: { id },
         data: {
           status: NewsletterStatus.PUBLISHED,
@@ -285,6 +317,14 @@ export class NewslettersService {
         },
         select: newsletterSelect,
       });
+
+      // First successful publish only. Re-publishing hits the PUBLISHED branch
+      // below and edits go through update(), so notifications fire exactly once.
+      // Dispatch is fire-and-forget: publication is already committed and an
+      // email failure must never roll it back or delay the response.
+      void this.dispatchPublishNotifications(published);
+
+      return published;
     }
 
     if (newsletter.status === NewsletterStatus.PUBLISHED) {
@@ -329,6 +369,40 @@ export class NewslettersService {
       },
       select: newsletterSelect,
     });
+  }
+
+  private async dispatchPublishNotifications(
+    newsletter: Prisma.NewsletterGetPayload<{ select: typeof newsletterSelect }>,
+  ): Promise<void> {
+    try {
+      const recipients = await this.subscribers.findActiveRecipients();
+      if (recipients.length === 0) {
+        return;
+      }
+
+      const summary = await this.mail.sendNewsletterPublishedEmails(
+        {
+          title: newsletter.title,
+          slug: newsletter.slug,
+          excerpt: newsletter.excerpt,
+          categoryName: newsletter.category?.name ?? null,
+          publishedAt: newsletter.publishedAt,
+        },
+        recipients,
+      );
+
+      this.logger.log(
+        `Newsletter ${newsletter.id} publish notifications — sent: ${summary.sent}, failed: ${summary.failed}, skipped: ${summary.skipped}, total: ${summary.total}`,
+      );
+    } catch (error) {
+      // Publication is already committed; surface nothing to the client and
+      // never log recipient addresses.
+      this.logger.error(
+        `Newsletter ${newsletter.id} publish notifications failed to dispatch: ${
+          error instanceof Error ? error.message : 'unknown error'
+        }`,
+      );
+    }
   }
 
   private async generateUniqueSlug(

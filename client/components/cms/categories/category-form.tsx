@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
+import { Alert, Button, FieldHint, Input, Label, Textarea } from "@/components/ui";
 import { getCategoryErrorMessage } from "./category-errors";
 
 export type CategoryFormValues = {
@@ -24,9 +25,6 @@ type CategoryFormProps = {
 const NAME_MIN = 2;
 const NAME_MAX = 100;
 const DESCRIPTION_MAX = 1000;
-
-const inputClass =
-  "w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50";
 
 type FieldErrors = { name?: string; description?: string };
 
@@ -103,29 +101,17 @@ export function CategoryForm({
 
   return (
     <form className="mt-8 max-w-2xl space-y-5" onSubmit={handleSubmit} noValidate>
-      {submitError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
-          {submitError}
-        </div>
-      ) : null}
+      {submitError ? <Alert variant="error">{submitError}</Alert> : null}
 
       {!submitError && successMessage ? (
-        <div
-          role="status"
-          className="rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-        >
-          {successMessage}
-        </div>
+        <Alert variant="success">{successMessage}</Alert>
       ) : null}
 
-      <div className="space-y-1">
-        <label htmlFor="name" className="block text-sm font-medium">
-          Name <span className="text-red-500">*</span>
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="name" required>
+          Name
+        </Label>
+        <Input
           id="name"
           name="name"
           type="text"
@@ -136,24 +122,22 @@ export function CategoryForm({
             setFieldErrors((prev) => ({ ...prev, name: undefined }));
             markDirty();
           }}
+          error={Boolean(fieldErrors.name)}
           aria-invalid={Boolean(fieldErrors.name)}
           aria-describedby={fieldErrors.name ? "name-error" : undefined}
-          className={inputClass}
         />
         {fieldErrors.name ? (
-          <p id="name-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="name-error" className="text-xs text-danger" role="alert">
             {fieldErrors.name}
           </p>
         ) : (
-          <p className="text-xs text-zinc-500">The slug is generated automatically from the name.</p>
+          <FieldHint>The slug is generated automatically from the name.</FieldHint>
         )}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="description" className="block text-sm font-medium">
-          Description
-        </label>
-        <textarea
+      <div className="space-y-1.5">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
           id="description"
           name="description"
           rows={4}
@@ -164,27 +148,23 @@ export function CategoryForm({
             setFieldErrors((prev) => ({ ...prev, description: undefined }));
             markDirty();
           }}
+          error={Boolean(fieldErrors.description)}
           aria-invalid={Boolean(fieldErrors.description)}
           aria-describedby={fieldErrors.description ? "description-error" : undefined}
-          className={`${inputClass} resize-y`}
         />
         {fieldErrors.description ? (
-          <p id="description-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="description-error" className="text-xs text-danger" role="alert">
             {fieldErrors.description}
           </p>
         ) : (
-          <p className="text-xs text-zinc-500">Optional short summary of what belongs in this category.</p>
+          <FieldHint>Optional short summary of what belongs in this category.</FieldHint>
         )}
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={submitDisabled}
-          className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitDisabled}>
           {submitting ? submittingLabel : submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   );

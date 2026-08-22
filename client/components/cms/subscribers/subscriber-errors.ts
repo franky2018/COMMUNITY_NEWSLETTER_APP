@@ -1,26 +1,5 @@
 import { ApiError } from "@/lib/api/client";
-
-type NestErrorPayload = {
-  statusCode?: number;
-  message?: string | string[];
-  error?: string;
-};
-
-function readPayloadMessages(payload: unknown): string[] {
-  if (payload && typeof payload === "object") {
-    const message = (payload as NestErrorPayload).message;
-
-    if (Array.isArray(message)) {
-      return message.filter((entry): entry is string => typeof entry === "string");
-    }
-
-    if (typeof message === "string") {
-      return [message];
-    }
-  }
-
-  return [];
-}
+import { readPayloadMessages } from "@/lib/api/errors";
 
 export function getSubscriberErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {

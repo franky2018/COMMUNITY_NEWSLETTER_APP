@@ -7,6 +7,20 @@ import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import type { Category } from "@/types/api";
+import {
+  Alert,
+  Button,
+  EmptyState,
+  Skeleton,
+  Table,
+  TableWrap,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  buttonClasses,
+} from "@/components/ui";
 import { CategoryActions } from "./category-actions";
 
 type LoadState = "loading" | "loaded" | "error";
@@ -28,9 +42,6 @@ function formatDate(value?: string | null): string {
     day: "numeric",
   });
 }
-
-const cellClass = "px-3 py-3 align-middle text-sm";
-const headerClass = "px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-500";
 
 export function CategoryList() {
   const { role } = useAuth();
@@ -78,25 +89,28 @@ export function CategoryList() {
   const handleDeleted = useCallback((id: string) => {
     setActionError("");
     setCategories((current) => current.filter((item) => item.id !== id));
-    setFeedback("Category deleted.");
+    setFeedback("");
   }, []);
 
   if (state === "loading") {
-    return <p className="mt-8 text-sm text-zinc-500">Loading categories…</p>;
+    return (
+      <div className="mt-8 space-y-3">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Skeleton key={index} className="h-12 w-full" />
+        ))}
+      </div>
+    );
   }
 
   if (state === "error") {
     return (
-      <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-        <p className="font-medium">Unable to load categories.</p>
-        <p className="mt-1 text-zinc-500">Something went wrong while fetching the list.</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="mt-4 rounded-md border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10"
-        >
+      <div className="mt-8">
+        <Alert variant="error">
+          Unable to load categories. Something went wrong while fetching the list.
+        </Alert>
+        <Button variant="secondary" className="mt-4" onClick={() => void load()}>
           Try again
-        </button>
+        </Button>
       </div>
     );
   }
@@ -105,30 +119,26 @@ export function CategoryList() {
     return (
       <div className="mt-8">
         {feedback ? (
-          <div
-            role="status"
-            className="mb-4 rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-          >
+          <Alert variant="success" className="mb-4">
             {feedback}
-          </div>
+          </Alert>
         ) : null}
 
-        <div className="rounded-lg border border-dashed border-black/15 p-10 text-center dark:border-white/20">
-          <p className="text-sm font-medium">No categories yet</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            {canManage
+        <EmptyState
+          title="No categories yet"
+          description={
+            canManage
               ? "Create your first category to organize newsletters."
-              : "Categories will appear here once they’re created."}
-          </p>
-          {canManage ? (
-            <Link
-              href="/cms/categories/new"
-              className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              New Category
-            </Link>
-          ) : null}
-        </div>
+              : "Categories will appear here once they’re created."
+          }
+          action={
+            canManage ? (
+              <Link href="/cms/categories/new" className={buttonClasses()}>
+                New Category
+              </Link>
+            ) : undefined
+          }
+        />
       </div>
     );
   }
@@ -136,54 +146,46 @@ export function CategoryList() {
   return (
     <div className="mt-8">
       {feedback ? (
-        <div
-          role="status"
-          className="mb-4 rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-        >
+        <Alert variant="success" className="mb-4">
           {feedback}
-        </div>
+        </Alert>
       ) : null}
 
       {actionError ? (
-        <div
-          role="alert"
-          className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
+        <Alert variant="error" className="mb-4">
           {actionError}
-        </div>
+        </Alert>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/15">
-        <table className="w-full border-collapse">
-          <thead className="border-b border-black/10 dark:border-white/15">
-            <tr>
-              <th className={headerClass}>Name</th>
-              <th className={headerClass}>Slug</th>
-              <th className={headerClass}>Description</th>
-              <th className={headerClass}>Created</th>
-              <th className={headerClass}>Updated</th>
-              <th className={`${headerClass} text-right`}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <TableWrap>
+        <Table>
+          <THead>
+            <Tr>
+              <Th>Name</Th>
+              <Th>Slug</Th>
+              <Th>Description</Th>
+              <Th>Created</Th>
+              <Th>Updated</Th>
+              <Th align="right">Actions</Th>
+            </Tr>
+          </THead>
+          <TBody>
             {categories.map((category) => (
-              <tr
-                key={category.id}
-                className="border-b border-black/5 last:border-b-0 dark:border-white/10"
-              >
-                <td className={`${cellClass} font-medium`}>
+              <Tr key={category.id}>
+                <Td className="font-medium text-heading">
                   {canManage ? (
-                    <Link href={`/cms/categories/${category.id}`} className="hover:underline">
+                    <Link
+                      href={`/cms/categories/${category.id}`}
+                      className="text-heading transition-colors hover:text-primary hover:underline"
+                    >
                       {category.name}
                     </Link>
                   ) : (
                     category.name
                   )}
-                </td>
-                <td className={`${cellClass} font-mono text-xs text-zinc-600 dark:text-zinc-400`}>
-                  {category.slug}
-                </td>
-                <td className={`${cellClass} text-zinc-600 dark:text-zinc-400`}>
+                </Td>
+                <Td className="font-mono text-xs text-muted">{category.slug}</Td>
+                <Td>
                   {category.description ? (
                     <div className="line-clamp-2 max-w-sm" title={category.description}>
                       {category.description}
@@ -191,14 +193,10 @@ export function CategoryList() {
                   ) : (
                     "—"
                   )}
-                </td>
-                <td className={`${cellClass} whitespace-nowrap text-zinc-600 dark:text-zinc-400`}>
-                  {formatDate(category.createdAt)}
-                </td>
-                <td className={`${cellClass} whitespace-nowrap text-zinc-600 dark:text-zinc-400`}>
-                  {formatDate(category.updatedAt)}
-                </td>
-                <td className={`${cellClass} text-right`}>
+                </Td>
+                <Td className="whitespace-nowrap">{formatDate(category.createdAt)}</Td>
+                <Td className="whitespace-nowrap">{formatDate(category.updatedAt)}</Td>
+                <Td align="right">
                   {role ? (
                     <CategoryActions
                       category={category}
@@ -207,12 +205,12 @@ export function CategoryList() {
                       onError={setActionError}
                     />
                   ) : null}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TBody>
+        </Table>
+      </TableWrap>
     </div>
   );
 }

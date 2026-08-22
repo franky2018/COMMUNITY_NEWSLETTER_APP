@@ -1,10 +1,13 @@
 "use client";
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
+import { AuthCard } from "@/components/auth/auth-card";
+import { Alert, Button, Input, Label } from "@/components/ui";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEFAULT_REDIRECT = "/cms";
@@ -79,25 +82,13 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-xl border border-black/10 bg-black/[.02] p-8 shadow-sm dark:border-white/15 dark:bg-white/[.03]">
-      <h1 className="text-2xl font-semibold">Sign in</h1>
-      <p className="mt-1 text-sm text-zinc-500">Access the Community Newsletter CMS.</p>
+    <AuthCard title="Sign in" subtitle="Access the Community Newsletter CMS.">
+      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        {formError ? <Alert variant="error">{formError}</Alert> : null}
 
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
-        {formError ? (
-          <div
-            role="alert"
-            className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-          >
-            {formError}
-          </div>
-        ) : null}
-
-        <div className="space-y-1">
-          <label htmlFor="email" className="block text-sm font-medium">
-            Email
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
             id="email"
             name="email"
             type="email"
@@ -107,22 +98,28 @@ function LoginForm() {
               setEmail(event.target.value);
               setFieldErrors((prev) => ({ ...prev, email: undefined }));
             }}
+            error={Boolean(fieldErrors.email)}
             aria-invalid={Boolean(fieldErrors.email)}
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
-            className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50"
           />
           {fieldErrors.email ? (
-            <p id="email-error" className="text-xs text-red-600 dark:text-red-400">
+            <p id="email-error" className="text-xs text-danger" role="alert">
               {fieldErrors.email}
             </p>
           ) : null}
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="password" className="block text-sm font-medium">
-            Password
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="password">Password</Label>
+            <Link
+              href="/auth/forgot-password"
+              className="text-xs font-medium text-primary transition-colors hover:text-primary-hover"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <Input
             id="password"
             name="password"
             type="password"
@@ -132,32 +129,32 @@ function LoginForm() {
               setPassword(event.target.value);
               setFieldErrors((prev) => ({ ...prev, password: undefined }));
             }}
+            error={Boolean(fieldErrors.password)}
             aria-invalid={Boolean(fieldErrors.password)}
             aria-describedby={fieldErrors.password ? "password-error" : undefined}
-            className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50"
           />
           {fieldErrors.password ? (
-            <p id="password-error" className="text-xs text-red-600 dark:text-red-400">
+            <p id="password-error" className="text-xs text-danger" role="alert">
               {fieldErrors.password}
             </p>
           ) : null}
         </div>
 
-        <button
+        <Button
           type="submit"
+          className="w-full"
           disabled={submitting || !email.trim() || !password}
-          className="w-full rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Signing in…" : "Sign in"}
-        </button>
+        </Button>
       </form>
-    </div>
+    </AuthCard>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="text-sm text-zinc-500">Loading…</div>}>
+    <Suspense fallback={<div className="text-sm text-muted">Loading…</div>}>
       <LoginForm />
     </Suspense>
   );

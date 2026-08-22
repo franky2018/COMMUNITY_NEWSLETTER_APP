@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { NewslettersModule } from './newsletters/newsletters.module';
 import { SubscribersModule } from './subscribers/subscribers.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SubscribersModule } from './subscribers/subscribers.module';
     CategoriesModule,
     NewslettersModule,
     SubscribersModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -123,8 +123,7 @@ export class SubscribersService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        // A concurrent insert won the race; report the current active record.
-        const subscriber = await this.prisma.subscriber.findUniqueOrThrow({
+          const subscriber = await this.prisma.subscriber.findUniqueOrThrow({
           where: { email: normalizedEmail },
           select: subscriberSelect,
         });
@@ -169,6 +168,16 @@ export class SubscribersService {
       where,
       select: subscriberSelect,
       orderBy: { subscribedAt: 'desc' },
+    });
+  }
+
+  async findActiveRecipients(): Promise<
+    { email: string; name: string | null }[]
+  > {
+    return this.prisma.subscriber.findMany({
+      where: { status: SubscriberStatus.ACTIVE },
+      select: { email: true, name: true },
+      orderBy: { subscribedAt: 'asc' },
     });
   }
 

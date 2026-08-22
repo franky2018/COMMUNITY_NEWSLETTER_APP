@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
 import { apiClient } from "@/lib/api/client";
 import type { Newsletter } from "@/types/api";
+import { Badge } from "@/components/ui";
 
 type NewsletterDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -58,7 +60,7 @@ function toParagraphs(content: string): string[] {
 }
 
 const backLinkClass =
-  "inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-foreground dark:text-zinc-400";
+  "inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-primary";
 
 function BackToNewsletters({ className }: { className?: string }) {
   return (
@@ -98,8 +100,10 @@ export default async function NewsletterDetailPage({ params }: NewsletterDetailP
   if (result === "error") {
     return (
       <section className="mx-auto w-full max-w-3xl px-4 py-16 text-center sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Unable to load this newsletter.</h1>
-        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-heading">
+          Unable to load this newsletter.
+        </h1>
+        <p className="mt-3 text-sm text-muted">
           Something went wrong while loading this newsletter. Please try again in a little while.
         </p>
         <BackToNewsletters className="mt-6 justify-center" />
@@ -119,32 +123,42 @@ export default async function NewsletterDetailPage({ params }: NewsletterDetailP
     <article className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
       <BackToNewsletters />
 
-      <header className="mt-6 border-b border-black/10 pb-6 dark:border-white/15">
-        {newsletter.category ? (
-          <span className="inline-flex w-fit rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:border-white/15 dark:text-zinc-300">
-            {newsletter.category.name}
-          </span>
+      <header className="mt-6 border-b border-border pb-6">
+        {newsletter.featuredImageUrl ? (
+          <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-xl bg-canvas">
+            <Image
+              src={newsletter.featuredImageUrl}
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 48rem"
+              className="object-cover"
+            />
+          </div>
         ) : null}
 
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight break-words sm:text-4xl">
+        {newsletter.category ? (
+          <Badge tone="neutral" className="w-fit">
+            {newsletter.category.name}
+          </Badge>
+        ) : null}
+
+        <h1 className="mt-3 break-words font-serif text-3xl font-semibold tracking-tight text-heading sm:text-4xl">
           {newsletter.title}
         </h1>
 
         {publishedLabel ? (
-          <time
-            dateTime={newsletter.publishedAt ?? undefined}
-            className="mt-3 block text-sm text-zinc-500"
-          >
+          <time dateTime={newsletter.publishedAt ?? undefined} className="mt-3 block text-sm text-muted">
             {publishedLabel}
           </time>
         ) : null}
 
         {newsletter.excerpt ? (
-          <p className="mt-4 text-base text-zinc-600 dark:text-zinc-400">{newsletter.excerpt}</p>
+          <p className="mt-4 text-base text-body">{newsletter.excerpt}</p>
         ) : null}
       </header>
 
-      <div className="mt-8 space-y-5 text-base leading-7">
+      <div className="mt-8 space-y-5 text-base leading-7 text-body">
         {paragraphs.length > 0 ? (
           paragraphs.map((paragraph, index) => (
             <p key={index} className="whitespace-pre-line break-words">
@@ -156,7 +170,7 @@ export default async function NewsletterDetailPage({ params }: NewsletterDetailP
         )}
       </div>
 
-      <footer className="mt-10 border-t border-black/10 pt-6 dark:border-white/15">
+      <footer className="mt-10 border-t border-border pt-6">
         <BackToNewsletters />
       </footer>
     </article>

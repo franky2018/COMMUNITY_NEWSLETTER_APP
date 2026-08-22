@@ -10,6 +10,7 @@ import {
   CategoryForm,
   type CategoryFormValues,
 } from "@/components/cms/categories/category-form";
+import { AccessDenied } from "@/components/cms/access-denied";
 import type { Category } from "@/types/api";
 
 type LoadState = "loading" | "loaded" | "not-found" | "forbidden" | "error";
@@ -95,12 +96,12 @@ export default function EditCategoryPage() {
   );
 
   const breadcrumb = (
-    <div className="text-sm text-zinc-500">
-      <Link href="/cms/categories" className="hover:underline">
+    <div className="text-sm text-muted">
+      <Link href="/cms/categories" className="transition-colors hover:text-primary">
         Categories
       </Link>
       <span className="px-1">/</span>
-      <span className="text-foreground">Edit</span>
+      <span className="text-heading">Edit</span>
     </div>
   );
 
@@ -108,13 +109,12 @@ export default function EditCategoryPage() {
     return (
       <div className="mx-auto w-full max-w-5xl">
         {breadcrumb}
-        <div className="mt-8 rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-          <p className="font-medium">You don’t have permission to edit categories.</p>
-          <p className="mt-1">Categories are managed by editors and admins.</p>
-          <Link href="/cms/categories" className="mt-4 inline-block hover:underline">
-            ← Back to categories
-          </Link>
-        </div>
+        <AccessDenied
+          title="You don’t have permission to edit categories."
+          description="Categories are managed by editors and admins."
+          backHref="/cms/categories"
+          backLabel="Back to categories"
+        />
       </div>
     );
   }
@@ -123,7 +123,7 @@ export default function EditCategoryPage() {
     return (
       <div className="mx-auto w-full max-w-5xl">
         {breadcrumb}
-        <p className="mt-8 text-sm text-zinc-500">Loading category…</p>
+        <p className="mt-8 text-sm text-muted">Loading category…</p>
       </div>
     );
   }
@@ -132,10 +132,13 @@ export default function EditCategoryPage() {
     return (
       <div className="mx-auto w-full max-w-5xl">
         {breadcrumb}
-        <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-          <p className="font-medium">Category not found</p>
-          <p className="mt-1 text-zinc-500">It may have been removed or the link is incorrect.</p>
-          <Link href="/cms/categories" className="mt-4 inline-block text-sm hover:underline">
+        <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p className="font-serif text-lg font-semibold text-heading">Category not found</p>
+          <p className="mt-1 text-sm text-muted">It may have been removed or the link is incorrect.</p>
+          <Link
+            href="/cms/categories"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+          >
             ← Back to categories
           </Link>
         </div>
@@ -147,13 +150,12 @@ export default function EditCategoryPage() {
     return (
       <div className="mx-auto w-full max-w-5xl">
         {breadcrumb}
-        <div className="mt-8 rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-          <p className="font-medium">You don’t have access to this category.</p>
-          <p className="mt-1">You may not have permission to manage it.</p>
-          <Link href="/cms/categories" className="mt-4 inline-block hover:underline">
-            ← Back to categories
-          </Link>
-        </div>
+        <AccessDenied
+          title="You don’t have access to this category."
+          description="You may not have permission to manage it."
+          backHref="/cms/categories"
+          backLabel="Back to categories"
+        />
       </div>
     );
   }
@@ -162,10 +164,13 @@ export default function EditCategoryPage() {
     return (
       <div className="mx-auto w-full max-w-5xl">
         {breadcrumb}
-        <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-          <p className="font-medium">Unable to load this category.</p>
-          <p className="mt-1 text-zinc-500">Something went wrong. Please try again.</p>
-          <Link href="/cms/categories" className="mt-4 inline-block hover:underline">
+        <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p className="font-serif text-lg font-semibold text-heading">Unable to load this category.</p>
+          <p className="mt-1 text-sm text-muted">Something went wrong. Please try again.</p>
+          <Link
+            href="/cms/categories"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+          >
             ← Back to categories
           </Link>
         </div>
@@ -178,8 +183,8 @@ export default function EditCategoryPage() {
       {breadcrumb}
 
       <div className="mt-2 min-w-0">
-        <h1 className="truncate text-2xl font-semibold">{category.name}</h1>
-        <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-zinc-500">
+        <h1 className="truncate font-serif text-2xl font-semibold text-heading">{category.name}</h1>
+        <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted">
           <div>
             <dt className="inline">Slug: </dt>
             <dd className="inline font-mono">{category.slug}</dd>

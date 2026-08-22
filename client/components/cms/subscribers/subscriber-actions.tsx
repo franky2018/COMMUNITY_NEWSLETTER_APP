@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { apiClient } from "@/lib/api/client";
 import type { Subscriber, UserRole } from "@/types/api";
+import { Button, ConfirmDialog, useToast } from "@/components/ui";
 import { getSubscriberErrorMessage } from "./subscriber-errors";
 
 type SubscriberActionsProps = {
@@ -13,12 +14,8 @@ type SubscriberActionsProps = {
   onError?: (message: string) => void;
 };
 
-const buttonBase =
-  "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
-const neutralButton = `${buttonBase} border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10`;
-const dangerButton = `${buttonBase} border-red-500/40 text-red-600 hover:bg-red-500/10 dark:text-red-400`;
-
 export function SubscriberActions({ subscriber, role, onChanged, onError }: SubscriberActionsProps) {
+  const { toast } = useToast();
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -39,36 +36,31 @@ export function SubscriberActions({ subscriber, role, onChanged, onError }: Subs
         { requiresAuth: true },
       );
       onChanged(updated);
+      toast({ title: "Subscriber unsubscribed.", description: subscriber.email, variant: "success" });
+      setConfirming(false);
     } catch (error) {
       onError?.(getSubscriberErrorMessage(error, "Unable to unsubscribe this subscriber."));
     } finally {
       setPending(false);
-      setConfirming(false);
     }
   }
 
-  if (!confirming) {
-    return (
-      <button type="button" className={dangerButton} onClick={() => setConfirming(true)}>
-        Unsubscribe
-      </button>
-    );
-  }
-
   return (
-    <span className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-zinc-500">Mark this subscriber as unsubscribed?</span>
-      <button type="button" className={dangerButton} disabled={pending} onClick={unsubscribe}>
-        {pending ? "Unsubscribing…" : "Confirm"}
-      </button>
-      <button
-        type="button"
-        className={neutralButton}
-        disabled={pending}
-        onClick={() => setConfirming(false)}
-      >
-        Cancel
-      </button>
-    </span>
+    <>
+      <Button type="button" variant="danger" size="sm" onClick={() => setConfirming(true)}>
+        Unsubscribe
+      </Button>
+      <ConfirmDialog
+        open={confirming}
+        title="Unsubscribe this subscriber?"
+        description={`${subscriber.email} will be marked as unsubscribed and will stop receiving newsletters.`}
+        confirmLabel="Unsubscribe"
+        loadingLabel="Unsubscribing…"
+        confirmVariant="danger"
+        loading={pending}
+        onConfirm={unsubscribe}
+        onCancel={() => setConfirming(false)}
+      />
+    </>
   );
 }

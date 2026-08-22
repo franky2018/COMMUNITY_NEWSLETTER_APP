@@ -3,10 +3,19 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
+
+const emptyToNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+};
 
 export class UpdateNewsletterDto {
   @IsOptional()
@@ -36,6 +45,13 @@ export class UpdateNewsletterDto {
     typeof value === 'string' ? value.trim() : value,
   )
   excerpt?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  @IsUrl({ protocols: ['https'], require_protocol: true })
+  @Transform(emptyToNull)
+  featuredImageUrl?: string | null;
 
   @IsOptional()
   @IsUUID()

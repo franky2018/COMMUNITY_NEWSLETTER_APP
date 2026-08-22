@@ -53,6 +53,7 @@ export default function NewNewsletterPage() {
         title: values.title,
         content: values.content,
         excerpt: values.excerpt,
+        featuredImageUrl: values.featuredImageUrl,
         categoryId: values.categoryId,
       },
       { requiresAuth: true },
@@ -63,21 +64,21 @@ export default function NewNewsletterPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="text-sm text-zinc-500">
-        <Link href="/cms/newsletters" className="hover:underline">
+      <div className="text-sm text-muted">
+        <Link href="/cms/newsletters" className="transition-colors hover:text-primary hover:underline">
           Newsletters
         </Link>
         <span className="px-1">/</span>
-        <span>New</span>
+        <span className="text-heading">New</span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-semibold">New Newsletter</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <h1 className="mt-2 font-serif text-2xl font-semibold text-heading">New Newsletter</h1>
+      <p className="mt-1 text-sm text-muted">
         Create a draft. It stays a draft until an editor or admin publishes it.
       </p>
 
       {categoriesState === "loading" ? (
-        <p className="mt-8 text-sm text-zinc-500">Loading…</p>
+        <p className="mt-8 text-sm text-muted">Loading…</p>
       ) : (
         <NewsletterForm
           categories={categories}

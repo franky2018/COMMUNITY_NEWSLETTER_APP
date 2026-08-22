@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from './users.service';
@@ -31,7 +32,14 @@ describe('UsersService', () => {
     };
 
     const moduleRef = await Test.createTestingModule({
-      providers: [UsersService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        UsersService,
+        { provide: PrismaService, useValue: prisma },
+        {
+          provide: ConfigService,
+          useValue: { getOrThrow: () => 'test-cloud' },
+        },
+      ],
     }).compile();
 
     service = moduleRef.get(UsersService);
@@ -83,7 +91,6 @@ describe('UsersService', () => {
       });
 
       expect(result).not.toHaveProperty('passwordHash');
-      // create is called with an explicit select that excludes passwordHash
       expect(
         prisma.user.create.mock.calls[0][0].select.passwordHash,
       ).toBeUndefined();

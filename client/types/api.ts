@@ -8,6 +8,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  avatarUrl?: string | null;
   role: UserRole;
   isActive: boolean;
   tokenVersion: number;
@@ -42,6 +43,7 @@ export interface Newsletter {
   slug: string;
   content: string;
   excerpt?: string | null;
+  featuredImageUrl?: string | null;
   status: NewsletterStatus;
   publishedAt?: string | null;
   createdAt: string;
@@ -78,4 +80,21 @@ export type ManagedSubscriberOutcome = "created" | "reactivated" | "already_acti
 export interface ManagedSubscriberResult {
   result: ManagedSubscriberOutcome;
   subscriber: Subscriber;
+}
+
+export type UploadType = "avatar" | "newsletter";
+
+// Response from POST /media/signature: everything the browser needs to upload
+// directly to Cloudinary. `params` are the exact fields that were signed and
+// must be echoed back verbatim alongside api_key/timestamp/signature.
+export interface UploadSignature {
+  cloudName: string;
+  apiKey: string;
+  timestamp: number;
+  signature: string;
+  params: Record<string, string>;
+  resourceType: string;
+  maxBytes: number;
+  allowedFormats: string[];
+  allowedMimeTypes: string[];
 }

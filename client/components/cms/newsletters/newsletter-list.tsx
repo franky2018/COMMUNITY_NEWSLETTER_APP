@@ -1,11 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import type { Newsletter } from "@/types/api";
+import {
+  Alert,
+  Button,
+  EmptyState,
+  Skeleton,
+  Table,
+  TableWrap,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  buttonClasses,
+} from "@/components/ui";
 import { NewsletterActions } from "./newsletter-actions";
 import { NewsletterStatusBadge } from "./newsletter-status-badge";
 
@@ -28,9 +43,6 @@ function formatDate(value?: string | null): string {
     day: "numeric",
   });
 }
-
-const cellClass = "px-3 py-3 align-middle text-sm";
-const headerClass = "px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-500";
 
 export function NewsletterList() {
   const { role } = useAuth();
@@ -77,96 +89,94 @@ export function NewsletterList() {
   }, []);
 
   if (state === "loading") {
-    return <p className="mt-8 text-sm text-zinc-500">Loading newsletters…</p>;
+    return (
+      <div className="mt-8 space-y-3">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Skeleton key={index} className="h-12 w-full" />
+        ))}
+      </div>
+    );
   }
 
   if (state === "error") {
     return (
-      <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-        <p className="font-medium">Unable to load newsletters.</p>
-        <p className="mt-1 text-zinc-500">Something went wrong while fetching the list.</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="mt-4 rounded-md border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10"
-        >
+      <div className="mt-8">
+        <Alert variant="error">
+          Unable to load newsletters. Something went wrong while fetching the list.
+        </Alert>
+        <Button variant="secondary" className="mt-4" onClick={() => void load()}>
           Try again
-        </button>
+        </Button>
       </div>
     );
   }
 
   if (newsletters.length === 0) {
     return (
-      <div className="mt-8 rounded-lg border border-dashed border-black/15 p-10 text-center dark:border-white/20">
-        <p className="text-sm font-medium">No newsletters yet</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Create your first newsletter to get started.
-        </p>
-        <Link
-          href="/cms/newsletters/new"
-          className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-        >
-          New Newsletter
-        </Link>
-      </div>
+      <EmptyState
+        className="mt-8"
+        title="No newsletters yet"
+        description="Create your first newsletter to get started."
+        action={
+          <Link href="/cms/newsletters/new" className={buttonClasses()}>
+            New Newsletter
+          </Link>
+        }
+      />
     );
   }
 
   return (
     <div className="mt-8">
       {actionError ? (
-        <div
-          role="alert"
-          className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
+        <Alert variant="error" className="mb-4">
           {actionError}
-        </div>
+        </Alert>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/15">
-        <table className="w-full border-collapse">
-          <thead className="border-b border-black/10 dark:border-white/15">
-            <tr>
-              <th className={headerClass}>Title</th>
-              <th className={headerClass}>Status</th>
-              <th className={headerClass}>Category</th>
-              <th className={headerClass}>Author</th>
-              <th className={headerClass}>Created</th>
-              <th className={headerClass}>Published</th>
-              <th className={`${headerClass} text-right`}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <TableWrap>
+        <Table>
+          <THead>
+            <Tr>
+              <Th>Title</Th>
+              <Th>Status</Th>
+              <Th>Category</Th>
+              <Th>Author</Th>
+              <Th>Created</Th>
+              <Th>Published</Th>
+              <Th align="right">Actions</Th>
+            </Tr>
+          </THead>
+          <TBody>
             {newsletters.map((newsletter) => (
-              <tr
-                key={newsletter.id}
-                className="border-b border-black/5 last:border-b-0 dark:border-white/10"
-              >
-                <td className={`${cellClass} font-medium`}>
-                  <Link
-                    href={`/cms/newsletters/${newsletter.id}`}
-                    className="hover:underline"
-                  >
-                    {newsletter.title}
-                  </Link>
-                </td>
-                <td className={cellClass}>
+              <Tr key={newsletter.id}>
+                <Td className="font-medium text-heading">
+                  <div className="flex items-center gap-3">
+                    {newsletter.featuredImageUrl ? (
+                      <Image
+                        src={newsletter.featuredImageUrl}
+                        alt=""
+                        width={48}
+                        height={32}
+                        className="h-8 w-12 shrink-0 rounded object-cover"
+                      />
+                    ) : null}
+                    <Link
+                      href={`/cms/newsletters/${newsletter.id}`}
+                      className="text-heading transition-colors hover:text-primary hover:underline"
+                    >
+                      {newsletter.title}
+                    </Link>
+                  </div>
+                </Td>
+                <Td>
                   <NewsletterStatusBadge status={newsletter.status} />
-                </td>
-                <td className={`${cellClass} text-zinc-600 dark:text-zinc-400`}>
-                  {newsletter.category?.name ?? "—"}
-                </td>
-                <td className={`${cellClass} text-zinc-600 dark:text-zinc-400`}>
-                  {newsletter.author?.name ?? "—"}
-                </td>
-                <td className={`${cellClass} whitespace-nowrap text-zinc-600 dark:text-zinc-400`}>
-                  {formatDate(newsletter.createdAt)}
-                </td>
-                <td className={`${cellClass} whitespace-nowrap text-zinc-600 dark:text-zinc-400`}>
-                  {formatDate(newsletter.publishedAt)}
-                </td>
-                <td className={`${cellClass} text-right`}>
+                </Td>
+                <Td>{newsletter.category?.name ?? "—"}</Td>
+                <Td>{newsletter.author?.name ?? "—"}</Td>
+                <Td className="whitespace-nowrap">{formatDate(newsletter.createdAt)}</Td>
+                <Td className="whitespace-nowrap">{formatDate(newsletter.publishedAt)}</Td>
+                <Td align="right">
                   {role ? (
                     <NewsletterActions
                       newsletter={newsletter}
@@ -175,12 +185,12 @@ export function NewsletterList() {
                       onError={setActionError}
                     />
                   ) : null}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TBody>
+        </Table>
+      </TableWrap>
     </div>
   );
 }

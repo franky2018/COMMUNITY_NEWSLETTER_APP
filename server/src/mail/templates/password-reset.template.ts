@@ -24,8 +24,7 @@ export function buildPasswordResetEmail(
     'If you did not request a password reset, you can safely ignore this email — your password will not change.',
   ].join('\n');
 
-  // Inline styles only: most email clients strip <style> blocks and external CSS.
-  const html = `<!doctype html>
+    const html = `<!doctype html>
 <html>
   <body style="margin:0;padding:24px;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background-color:#ffffff;border-radius:8px;padding:32px;">
