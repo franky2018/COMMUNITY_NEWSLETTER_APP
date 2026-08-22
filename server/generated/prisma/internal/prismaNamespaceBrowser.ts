@@ -78,11 +78,15 @@ export const UserScalarFieldEnum = {
   email: 'email',
   passwordHash: 'passwordHash',
   name: 'name',
+  avatarUrl: 'avatarUrl',
   role: 'role',
   isActive: 'isActive',
   tokenVersion: 'tokenVersion',
   passwordResetTokenHash: 'passwordResetTokenHash',
   passwordResetExpiresAt: 'passwordResetExpiresAt',
+  emailVerified: 'emailVerified',
+  emailVerificationTokenHash: 'emailVerificationTokenHash',
+  emailVerificationExpiresAt: 'emailVerificationExpiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -108,6 +112,7 @@ export const NewsletterScalarFieldEnum = {
   slug: 'slug',
   content: 'content',
   excerpt: 'excerpt',
+  featuredImageUrl: 'featuredImageUrl',
   status: 'status',
   publishedAt: 'publishedAt',
   createdAt: 'createdAt',

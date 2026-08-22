@@ -13,6 +13,8 @@ import {
 } from "@/components/cms/newsletters/newsletter-form";
 import { NewsletterActions } from "@/components/cms/newsletters/newsletter-actions";
 import { NewsletterStatusBadge } from "@/components/cms/newsletters/newsletter-status-badge";
+import { AccessDenied } from "@/components/cms/access-denied";
+import { Alert } from "@/components/ui";
 import type { Category, Newsletter } from "@/types/api";
 
 type LoadState = "loading" | "loaded" | "not-found" | "forbidden" | "error";
@@ -119,6 +121,7 @@ function EditNewsletterView() {
           title: values.title,
           content: values.content,
           excerpt: values.excerpt,
+          featuredImageUrl: values.featuredImageUrl,
           categoryId: values.categoryId,
         },
         { requiresAuth: true },
@@ -138,15 +141,18 @@ function EditNewsletterView() {
   }, []);
 
   if (state === "loading") {
-    return <p className="mt-8 text-sm text-zinc-500">Loading newsletter…</p>;
+    return <p className="mt-8 text-sm text-muted">Loading newsletter…</p>;
   }
 
   if (state === "not-found") {
     return (
-      <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-        <p className="font-medium">Newsletter not found</p>
-        <p className="mt-1 text-zinc-500">It may have been removed or the link is incorrect.</p>
-        <Link href="/cms/newsletters" className="mt-4 inline-block text-sm hover:underline">
+      <div className="mt-8 rounded-xl border border-border bg-card p-6 text-sm shadow-sm">
+        <p className="font-serif text-base font-semibold text-heading">Newsletter not found</p>
+        <p className="mt-1 text-muted">It may have been removed or the link is incorrect.</p>
+        <Link
+          href="/cms/newsletters"
+          className="mt-4 inline-block text-sm text-primary transition-colors hover:underline"
+        >
           ← Back to newsletters
         </Link>
       </div>
@@ -155,22 +161,24 @@ function EditNewsletterView() {
 
   if (state === "forbidden") {
     return (
-      <div className="mt-8 rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-        <p className="font-medium">You don’t have access to this newsletter.</p>
-        <p className="mt-1">You can only manage newsletters you’re permitted to edit.</p>
-        <Link href="/cms/newsletters" className="mt-4 inline-block hover:underline">
-          ← Back to newsletters
-        </Link>
-      </div>
+      <AccessDenied
+        title="You don’t have access to this newsletter."
+        description="You can only manage newsletters you’re permitted to edit."
+        backHref="/cms/newsletters"
+        backLabel="Back to newsletters"
+      />
     );
   }
 
   if (state === "error" || !newsletter) {
     return (
-      <div className="mt-8 rounded-lg border border-black/10 p-6 text-sm dark:border-white/15">
-        <p className="font-medium">Unable to load this newsletter.</p>
-        <p className="mt-1 text-zinc-500">Something went wrong. Please try again.</p>
-        <Link href="/cms/newsletters" className="mt-4 inline-block hover:underline">
+      <div className="mt-8 rounded-xl border border-border bg-card p-6 text-sm shadow-sm">
+        <p className="font-serif text-base font-semibold text-heading">Unable to load this newsletter.</p>
+        <p className="mt-1 text-muted">Something went wrong. Please try again.</p>
+        <Link
+          href="/cms/newsletters"
+          className="mt-4 inline-block text-sm text-primary transition-colors hover:underline"
+        >
           ← Back to newsletters
         </Link>
       </div>
@@ -185,21 +193,21 @@ function EditNewsletterView() {
 
   return (
     <>
-      <div className="text-sm text-zinc-500">
-        <Link href="/cms/newsletters" className="hover:underline">
+      <div className="text-sm text-muted">
+        <Link href="/cms/newsletters" className="transition-colors hover:text-primary hover:underline">
           Newsletters
         </Link>
         <span className="px-1">/</span>
-        <span className="text-foreground">Edit</span>
+        <span className="text-heading">Edit</span>
       </div>
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="truncate text-2xl font-semibold">{newsletter.title}</h1>
+            <h1 className="truncate font-serif text-2xl font-semibold text-heading">{newsletter.title}</h1>
             <NewsletterStatusBadge status={newsletter.status} />
           </div>
-          <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-zinc-500">
+          <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted">
             <div>
               <dt className="inline">Author: </dt>
               <dd className="inline">{newsletter.author?.name ?? "—"}</dd>
@@ -226,12 +234,9 @@ function EditNewsletterView() {
       </div>
 
       {actionError ? (
-        <div
-          role="alert"
-          className="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
+        <Alert variant="error" className="mt-4">
           {actionError}
-        </div>
+        </Alert>
       ) : null}
 
       <NewsletterForm
@@ -241,6 +246,7 @@ function EditNewsletterView() {
           title: newsletter.title,
           excerpt: newsletter.excerpt ?? "",
           content: newsletter.content,
+          featuredImageUrl: newsletter.featuredImageUrl ?? null,
           categoryId: newsletter.categoryId ?? "",
         }}
         submitLabel="Save Changes"
@@ -256,7 +262,7 @@ function EditNewsletterView() {
 export default function EditNewsletterPage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+      <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
         <EditNewsletterView />
       </Suspense>
     </div>

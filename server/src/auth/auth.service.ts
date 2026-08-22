@@ -24,6 +24,7 @@ export interface LoginResult extends AuthTokens {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private static readonly PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
+  private static readonly EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 
   private readonly dummyPasswordHash = bcrypt.hashSync(
     'invalid-user-timing-guard',
@@ -93,6 +94,26 @@ export class AuthService {
     await this.users.incrementTokenVersion(userId);
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.users.findByIdWithHash(userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    // Rehash on the shared bcrypt cost and bump tokenVersion so every existing
+    // access/refresh token for this user is immediately revoked.
+    await this.users.changePassword(userId, newPassword);
+  }
+
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.users.findByEmailForReset(email);
     // Silently no-op for unknown or inactive accounts: the controller returns
@@ -103,7 +124,7 @@ export class AuthService {
     }
 
     const rawToken = randomBytes(32).toString('base64url');
-    const tokenHash = this.hashResetToken(rawToken);
+    const tokenHash = this.hashToken(rawToken);
     const expiresAt = new Date(Date.now() + AuthService.PASSWORD_RESET_TTL_MS);
     await this.users.setPasswordResetToken(user.id, tokenHash, expiresAt);
 
@@ -123,7 +144,7 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    const tokenHash = this.hashResetToken(token);
+    const tokenHash = this.hashToken(token);
 
     // Cheap rejection first so invalid tokens never trigger a bcrypt hash.
     const match = await this.users.findByActiveResetTokenHash(tokenHash);
@@ -142,7 +163,46 @@ export class AuthService {
     }
   }
 
-  private hashResetToken(token: string): string {
+  async verifyEmail(token: string): Promise<void> {
+    const tokenHash = this.hashToken(token);
+    // Single-use + expiry are enforced atomically: the row only updates while
+    // the hash matches and the deadline is in the future, and the same write
+    // clears the token so it cannot be replayed.
+    const verified = await this.users.completeEmailVerification(tokenHash);
+    if (verified === 0) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+  }
+
+  async resendVerification(userId: string): Promise<void> {
+    const user = await this.users.findById(userId);
+    // Already verified (or unknown) accounts are a silent no-op so the endpoint
+    // returns an identical response regardless of verification state.
+    if (!user || user.emailVerified) {
+      return;
+    }
+
+    const rawToken = randomBytes(32).toString('base64url');
+    const tokenHash = this.hashToken(rawToken);
+    const expiresAt = new Date(
+      Date.now() + AuthService.EMAIL_VERIFICATION_TTL_MS,
+    );
+    // Overwriting the stored hash invalidates any previously issued link.
+    await this.users.setEmailVerificationToken(user.id, tokenHash, expiresAt);
+
+    const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
+    const verifyUrl = `${frontendUrl}/auth/verify-email?token=${rawToken}`;
+
+    try {
+      await this.mail.sendVerificationEmail(user.email, verifyUrl);
+    } catch {
+      this.logger.error(
+        `Failed to dispatch verification email for user ${user.id}`,
+      );
+    }
+  }
+
+  private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
 

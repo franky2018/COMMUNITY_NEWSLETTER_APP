@@ -5,5 +5,6 @@ import { SubscribersController } from './subscribers.controller';
 @Module({
   controllers: [SubscribersController],
   providers: [SubscribersService],
+  exports: [SubscribersService],
 })
 export class SubscribersModule {}

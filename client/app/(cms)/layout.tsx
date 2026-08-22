@@ -20,7 +20,7 @@ export default function CmsLayout({ children }: LayoutProps<"/">) {
 
   if (status !== "authenticated" || !user) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8 text-sm text-zinc-500">
+      <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted">
         Loading…
       </div>
     );
@@ -29,7 +29,7 @@ export default function CmsLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1">
       <CmsSidebar
-        role={user.role}
+        user={user}
         mobileOpen={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
       />
@@ -39,7 +39,7 @@ export default function CmsLayout({ children }: LayoutProps<"/">) {
           onOpenNav={() => setMobileNavOpen(true)}
           onLogout={logout}
         />
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        <main className="flex-1 bg-canvas p-6 md:p-8">{children}</main>
       </div>
     </div>
   );

@@ -1,13 +1,28 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 
+import { ImageUploadField } from "@/components/cms/image-upload-field";
+import { MediaPicker } from "@/components/cms/media/media-picker";
+import {
+  Alert,
+  Badge,
+  Button,
+  FieldHint,
+  Input,
+  Label,
+  Modal,
+  Select,
+  Textarea,
+} from "@/components/ui";
 import { getApiErrorMessage } from "./newsletter-errors";
 
 export type NewsletterFormValues = {
   title: string;
   excerpt: string | null;
   content: string;
+  featuredImageUrl: string | null;
   categoryId: string | null;
 };
 
@@ -23,6 +38,7 @@ type NewsletterFormProps = {
     title: string;
     excerpt: string;
     content: string;
+    featuredImageUrl: string | null;
     categoryId: string;
   };
   submitLabel: string;
@@ -36,10 +52,16 @@ const TITLE_MIN = 3;
 const CONTENT_MIN = 10;
 const EXCERPT_MAX = 500;
 
-const inputClass =
-  "w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50";
-
 type FieldErrors = { title?: string; content?: string; excerpt?: string };
+
+// Content is edited as plain text, so mirror the public article: split on blank
+// lines into paragraphs and preserve single line breaks within each.
+function toParagraphs(content: string): string[] {
+  return content
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter((block) => block.length > 0);
+}
 
 export function NewsletterForm({
   categories,
@@ -54,10 +76,15 @@ export function NewsletterForm({
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [excerpt, setExcerpt] = useState(initialValues?.excerpt ?? "");
   const [content, setContent] = useState(initialValues?.content ?? "");
+  const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(
+    initialValues?.featuredImageUrl ?? null,
+  );
   const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? "");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   function markDirty() {
     setSubmitError(null);
@@ -111,6 +138,7 @@ export function NewsletterForm({
         title: title.trim(),
         content: content.trim(),
         excerpt: trimmedExcerpt === "" ? null : trimmedExcerpt,
+        featuredImageUrl,
         categoryId: categoryId === "" ? null : categoryId,
       });
     } catch (error) {
@@ -122,31 +150,24 @@ export function NewsletterForm({
 
   const submitDisabled = submitting || !title.trim() || !content.trim();
 
+  const selectedCategory = categories.find((category) => category.id === categoryId) ?? null;
+  const previewParagraphs = toParagraphs(content);
+  const hasPreviewContent = Boolean(title.trim() || content.trim());
+
   return (
-    <form className="mt-8 max-w-2xl space-y-5" onSubmit={handleSubmit} noValidate>
-      {submitError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
-        >
-          {submitError}
-        </div>
-      ) : null}
+    <>
+      <form className="mt-8 max-w-2xl space-y-5" onSubmit={handleSubmit} noValidate>
+      {submitError ? <Alert variant="error">{submitError}</Alert> : null}
 
       {!submitError && successMessage ? (
-        <div
-          role="status"
-          className="rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-        >
-          {successMessage}
-        </div>
+        <Alert variant="success">{successMessage}</Alert>
       ) : null}
 
-      <div className="space-y-1">
-        <label htmlFor="title" className="block text-sm font-medium">
-          Title <span className="text-red-500">*</span>
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="title" required>
+          Title
+        </Label>
+        <Input
           id="title"
           name="title"
           type="text"
@@ -157,22 +178,20 @@ export function NewsletterForm({
             setFieldErrors((prev) => ({ ...prev, title: undefined }));
             markDirty();
           }}
+          error={Boolean(fieldErrors.title)}
           aria-invalid={Boolean(fieldErrors.title)}
           aria-describedby={fieldErrors.title ? "title-error" : undefined}
-          className={inputClass}
         />
         {fieldErrors.title ? (
-          <p id="title-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="title-error" className="text-xs text-danger" role="alert">
             {fieldErrors.title}
           </p>
         ) : null}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="excerpt" className="block text-sm font-medium">
-          Excerpt
-        </label>
-        <textarea
+      <div className="space-y-1.5">
+        <Label htmlFor="excerpt">Excerpt</Label>
+        <Textarea
           id="excerpt"
           name="excerpt"
           rows={2}
@@ -183,24 +202,42 @@ export function NewsletterForm({
             setFieldErrors((prev) => ({ ...prev, excerpt: undefined }));
             markDirty();
           }}
+          error={Boolean(fieldErrors.excerpt)}
           aria-invalid={Boolean(fieldErrors.excerpt)}
           aria-describedby={fieldErrors.excerpt ? "excerpt-error" : undefined}
-          className={inputClass}
         />
         {fieldErrors.excerpt ? (
-          <p id="excerpt-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="excerpt-error" className="text-xs text-danger" role="alert">
             {fieldErrors.excerpt}
           </p>
         ) : (
-          <p className="text-xs text-zinc-500">Optional short summary shown in listings.</p>
+          <FieldHint>Optional short summary shown in listings.</FieldHint>
         )}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="content" className="block text-sm font-medium">
-          Content <span className="text-red-500">*</span>
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <ImageUploadField
+          uploadType="newsletter"
+          value={featuredImageUrl}
+          onChange={(url) => {
+            setFeaturedImageUrl(url);
+            markDirty();
+          }}
+          label="Featured image"
+          helpText="Optional. JPG, PNG, or WEBP up to 10 MB. Shown on cards and the article header."
+          shape="rect"
+          alt="Newsletter featured image"
+        />
+        <Button type="button" variant="ghost" size="sm" onClick={() => setShowMediaPicker(true)}>
+          Browse library
+        </Button>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="content" required>
+          Content
+        </Label>
+        <Textarea
           id="content"
           name="content"
           rows={12}
@@ -210,22 +247,21 @@ export function NewsletterForm({
             setFieldErrors((prev) => ({ ...prev, content: undefined }));
             markDirty();
           }}
+          error={Boolean(fieldErrors.content)}
+          className="font-mono"
           aria-invalid={Boolean(fieldErrors.content)}
           aria-describedby={fieldErrors.content ? "content-error" : undefined}
-          className={`${inputClass} resize-y font-mono`}
         />
         {fieldErrors.content ? (
-          <p id="content-error" className="text-xs text-red-600 dark:text-red-400">
+          <p id="content-error" className="text-xs text-danger" role="alert">
             {fieldErrors.content}
           </p>
         ) : null}
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="category" className="block text-sm font-medium">
-          Category
-        </label>
-        <select
+      <div className="space-y-1.5">
+        <Label htmlFor="category">Category</Label>
+        <Select
           id="category"
           name="category"
           value={categoryId}
@@ -234,7 +270,6 @@ export function NewsletterForm({
             setCategoryId(event.target.value);
             markDirty();
           }}
-          className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <option value="">No category</option>
           {categories.map((category) => (
@@ -242,23 +277,87 @@ export function NewsletterForm({
               {category.name}
             </option>
           ))}
-        </select>
+        </Select>
         {categoriesUnavailable ? (
-          <p className="text-xs text-zinc-500">Categories could not be loaded. You can still save without one.</p>
+          <FieldHint>Categories could not be loaded. You can still save without one.</FieldHint>
         ) : categories.length === 0 ? (
-          <p className="text-xs text-zinc-500">No categories available yet.</p>
+          <FieldHint>No categories available yet.</FieldHint>
         ) : null}
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={submitDisabled}
-          className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitDisabled}>
           {submitting ? submittingLabel : submitLabel}
-        </button>
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setShowPreview(true)}>
+          Preview
+        </Button>
       </div>
-    </form>
+      </form>
+
+      <MediaPicker
+        open={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={(url) => {
+          setFeaturedImageUrl(url);
+          markDirty();
+        }}
+      />
+
+      <Modal
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        title="Preview"
+        className="max-w-3xl"
+      >
+        <div className="mt-4 max-h-[70vh] overflow-y-auto">
+          {hasPreviewContent ? (
+            <article>
+              {featuredImageUrl ? (
+                <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-xl bg-canvas">
+                  <Image
+                    src={featuredImageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 40rem"
+                    className="object-cover"
+                  />
+                </div>
+              ) : null}
+
+              {selectedCategory ? (
+                <Badge tone="neutral" className="w-fit">
+                  {selectedCategory.name}
+                </Badge>
+              ) : null}
+
+              <h1 className="mt-3 break-words font-serif text-3xl font-semibold tracking-tight text-heading">
+                {title.trim() || "Untitled newsletter"}
+              </h1>
+
+              {excerpt.trim() ? (
+                <p className="mt-4 text-base text-body">{excerpt.trim()}</p>
+              ) : null}
+
+              <div className="mt-6 space-y-5 border-t border-border pt-6 text-base leading-7 text-body">
+                {previewParagraphs.length > 0 ? (
+                  previewParagraphs.map((paragraph, index) => (
+                    <p key={index} className="whitespace-pre-line break-words">
+                      {paragraph}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted">No content yet.</p>
+                )}
+              </div>
+            </article>
+          ) : (
+            <p className="text-sm text-muted">
+              Add a title or content to see a preview of your newsletter.
+            </p>
+          )}
+        </div>
+      </Modal>
+    </>
   );
 }

@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import type { Newsletter } from "@/types/api";
+import { Badge } from "@/components/ui";
 
 function formatDate(value?: string | null): string {
   if (!value) {
@@ -30,24 +32,36 @@ export function NewsletterCard({ newsletter }: NewsletterCardProps) {
   return (
     <Link
       href={`/newsletters/${newsletter.slug}`}
-      className="flex min-w-0 flex-col rounded-xl border border-black/10 bg-black/[.02] p-5 transition-colors hover:bg-black/[.04] dark:border-white/15 dark:bg-white/[.03] dark:hover:bg-white/[.06]"
+      className="flex min-w-0 flex-col rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40"
     >
-      {newsletter.category ? (
-        <span className="mb-2 inline-flex w-fit rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:border-white/15 dark:text-zinc-300">
-          {newsletter.category.name}
-        </span>
+      {newsletter.featuredImageUrl ? (
+        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-lg bg-canvas">
+          <Image
+            src={newsletter.featuredImageUrl}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+          />
+        </div>
       ) : null}
 
-      <h3 className="line-clamp-2 text-base font-semibold break-words">{newsletter.title}</h3>
+      {newsletter.category ? (
+        <Badge tone="neutral" className="mb-2 w-fit">
+          {newsletter.category.name}
+        </Badge>
+      ) : null}
+
+      <h3 className="line-clamp-2 break-words font-serif text-base font-semibold text-heading">
+        {newsletter.title}
+      </h3>
 
       {newsletter.excerpt ? (
-        <p className="mt-2 line-clamp-3 text-sm text-zinc-600 break-words dark:text-zinc-400">
-          {newsletter.excerpt}
-        </p>
+        <p className="mt-2 line-clamp-3 break-words text-sm text-body">{newsletter.excerpt}</p>
       ) : null}
 
       {publishedLabel ? (
-        <time dateTime={newsletter.publishedAt ?? undefined} className="mt-auto pt-4 text-xs text-zinc-500">
+        <time dateTime={newsletter.publishedAt ?? undefined} className="mt-auto pt-4 text-xs text-muted">
           {publishedLabel}
         </time>
       ) : null}

@@ -1,17 +1,23 @@
 "use client";
 
-import { useAuth } from "@/lib/auth/auth-context";
 import { DashboardStats } from "@/components/cms/dashboard/dashboard-stats";
+import { GrowthChart } from "@/components/cms/dashboard/growth-chart";
 import { RecentNewsletters } from "@/components/cms/dashboard/recent-newsletters";
 import { RecentSubscribers } from "@/components/cms/dashboard/recent-subscribers";
 import { useDashboardResource } from "@/components/cms/dashboard/use-dashboard-resource";
+import { useAuth } from "@/lib/auth/auth-context";
 import type { Category, Newsletter, Subscriber } from "@/types/api";
 
-const ROLE_LABELS = {
-  ADMIN: "Admin",
-  EDITOR: "Editor",
-  AUTHOR: "Author",
-} as const;
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) {
+    return "Good morning";
+  }
+  if (hour < 18) {
+    return "Good afternoon";
+  }
+  return "Good evening";
+}
 
 export default function CmsDashboardPage() {
   const { user, role } = useAuth();
@@ -24,11 +30,13 @@ export default function CmsDashboardPage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <header>
-        <h1 className="text-2xl font-semibold">
-          Welcome back{user?.name ? `, ${user.name}` : ""}
+        <h1 className="font-serif text-3xl font-semibold text-heading">
+          {user ? `${greeting()}, ${user.name}` : "Welcome back"}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {user ? `Signed in as ${ROLE_LABELS[user.role]}.` : "Loading your account…"}
+        <p className="mt-1 text-sm text-muted">
+          {user
+            ? "Here's what's happening across the community today."
+            : "Loading your account…"}
         </p>
       </header>
 
@@ -38,6 +46,12 @@ export default function CmsDashboardPage() {
         subscribers={subscribers}
         canViewSubscribers={canViewSubscribers}
       />
+
+      {canViewSubscribers ? (
+        <div className="mt-10">
+          <GrowthChart subscribers={subscribers.data ?? []} state={subscribers.state} />
+        </div>
+      ) : null}
 
       <RecentNewsletters
         state={newsletters.state}

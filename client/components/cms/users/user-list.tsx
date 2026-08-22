@@ -6,6 +6,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { apiClient } from "@/lib/api/client";
 import type { User, UserRole } from "@/types/api";
+import {
+  Alert,
+  Button,
+  EmptyState,
+  Skeleton,
+  Table,
+  TableWrap,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  buttonClasses,
+} from "@/components/ui";
 import { UserRoleBadge } from "./user-role-badge";
 import { UserStatusBadge } from "./user-status-badge";
 
@@ -19,11 +33,7 @@ const FILTERS: { value: RoleFilter; label: string }[] = [
   { value: "AUTHOR", label: "Authors" },
 ];
 
-const cellClass = "px-3 py-3 align-middle text-sm";
-const headerClass = "px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-500";
 const tabBase = "rounded-md px-3 py-1.5 text-sm font-medium transition-colors";
-const retryButton =
-  "mt-4 rounded-md border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10";
 
 function parseFilter(value: string | null): RoleFilter {
   if (value === "ADMIN" || value === "EDITOR" || value === "AUTHOR") {
@@ -101,18 +111,12 @@ export function UserList() {
     router.replace(next === "all" ? "/cms/users" : `/cms/users?role=${next}`);
   }
 
+  const usingAll = filter === "all";
   const activeLabel = FILTERS.find((entry) => entry.value === filter)?.label.toLowerCase() ?? "";
 
   return (
     <div className="mt-8 space-y-6">
-      {justCreated ? (
-        <div
-          role="status"
-          className="rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-        >
-          User created.
-        </div>
-      ) : null}
+      {justCreated ? <Alert variant="success">User created.</Alert> : null}
 
       <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard label="Total" value={stats ? stats.total : null} />
@@ -131,8 +135,8 @@ export function UserList() {
               aria-pressed={selected}
               className={
                 selected
-                  ? `${tabBase} bg-foreground text-background`
-                  : `${tabBase} border border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10`
+                  ? `${tabBase} bg-primary text-on-primary`
+                  : `${tabBase} border border-border text-body hover:bg-black/4 dark:hover:bg-white/10`
               }
             >
               {entry.label}
@@ -142,64 +146,77 @@ export function UserList() {
       </div>
 
       {state === "loading" ? (
-        <p className="text-sm text-zinc-500">Loading users…</p>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
       ) : state === "error" ? (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-          <p className="font-medium">Unable to load users.</p>
-          <p className="mt-1">Something went wrong while fetching the list.</p>
-          <button type="button" onClick={() => load()} className={retryButton}>
+        <div>
+          <Alert variant="error">
+            Unable to load users. Something went wrong while fetching the list.
+          </Alert>
+          <Button variant="secondary" className="mt-3" onClick={() => load()}>
             Try again
-          </button>
+          </Button>
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
-          usingAll={filter === "all"}
-          activeLabel={activeLabel}
-          onShowAll={() => selectFilter("all")}
+          title={usingAll ? "No users yet." : `No ${activeLabel} found.`}
+          action={
+            usingAll ? (
+              <Link href="/cms/users/new" className={buttonClasses()}>
+                New User
+              </Link>
+            ) : (
+              <Button variant="secondary" onClick={() => selectFilter("all")}>
+                Show all
+              </Button>
+            )
+          }
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/15">
-          <table className="w-full border-collapse">
-            <thead className="border-b border-black/10 dark:border-white/15">
-              <tr>
-                <th className={headerClass}>Name</th>
-                <th className={headerClass}>Email</th>
-                <th className={headerClass}>Role</th>
-                <th className={headerClass}>Status</th>
-                <th className={headerClass}>Created</th>
-                <th className={`${headerClass} text-right`}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableWrap>
+          <Table>
+            <THead>
+              <Tr>
+                <Th>Name</Th>
+                <Th>Email</Th>
+                <Th>Role</Th>
+                <Th>Status</Th>
+                <Th>Created</Th>
+                <Th align="right">Actions</Th>
+              </Tr>
+            </THead>
+            <TBody>
               {rows.map((user) => (
-                <tr
-                  key={user.id}
-                  className="border-b border-black/5 last:border-b-0 dark:border-white/10"
-                >
-                  <td className={`${cellClass} font-medium`}>{user.name}</td>
-                  <td className={cellClass}>
+                <Tr key={user.id}>
+                  <Td>
+                    <span className="font-medium text-heading">{user.name}</span>
+                  </Td>
+                  <Td>
                     <span className="select-all">{user.email}</span>
-                  </td>
-                  <td className={cellClass}>
+                  </Td>
+                  <Td>
                     <UserRoleBadge role={user.role} />
-                  </td>
-                  <td className={cellClass}>
+                  </Td>
+                  <Td>
                     <UserStatusBadge isActive={user.isActive} />
-                  </td>
-                  <td className={cellClass}>{formatDate(user.createdAt)}</td>
-                  <td className={`${cellClass} text-right`}>
+                  </Td>
+                  <Td>{formatDate(user.createdAt)}</Td>
+                  <Td align="right">
                     <Link
                       href={`/cms/users/${user.id}`}
-                      className="text-sm font-medium hover:underline"
+                      className="text-sm font-medium text-primary transition-colors hover:underline"
                     >
                       View
                     </Link>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TBody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );
@@ -207,42 +224,11 @@ export function UserList() {
 
 function StatCard({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="rounded-xl border border-black/10 bg-black/[.02] p-4 dark:border-white/15 dark:bg-white/[.03]">
-      <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</dt>
-      <dd className="mt-1 text-2xl font-semibold">{value === null ? "—" : value}</dd>
-    </div>
-  );
-}
-
-function EmptyState({
-  usingAll,
-  activeLabel,
-  onShowAll,
-}: {
-  usingAll: boolean;
-  activeLabel: string;
-  onShowAll: () => void;
-}) {
-  return (
-    <div className="rounded-lg border border-black/10 p-8 text-center dark:border-white/15">
-      {usingAll ? (
-        <>
-          <p className="text-sm text-zinc-500">No users yet.</p>
-          <Link
-            href="/cms/users/new"
-            className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            New User
-          </Link>
-        </>
-      ) : (
-        <>
-          <p className="text-sm text-zinc-500">No {activeLabel} found.</p>
-          <button type="button" onClick={onShowAll} className={`${retryButton} inline-block`}>
-            Show all
-          </button>
-        </>
-      )}
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-1 font-serif text-2xl font-semibold tabular-nums text-heading">
+        {value === null ? "—" : value}
+      </dd>
     </div>
   );
 }

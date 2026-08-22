@@ -11,8 +11,10 @@ export const metadata: Metadata = {
 export default function SubscribePage() {
   return (
     <section className="mx-auto w-full max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="text-3xl font-semibold tracking-tight">Stay up to date</h1>
-      <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">
+      <h1 className="font-serif text-3xl font-semibold tracking-tight text-heading">
+        Stay up to date
+      </h1>
+      <p className="mt-3 text-base text-body">
         Subscribe to receive new community newsletters and updates.
       </p>
 
@@ -21,7 +23,7 @@ export default function SubscribePage() {
       <div className="mt-10">
         <Link
           href="/newsletters"
-          className="text-sm font-medium text-zinc-600 transition-colors hover:text-foreground dark:text-zinc-400"
+          className="text-sm font-medium text-muted transition-colors hover:text-primary"
         >
           ← Back to newsletters
         </Link>

@@ -6,6 +6,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { apiClient } from "@/lib/api/client";
 import type { Subscriber } from "@/types/api";
+import {
+  Alert,
+  Button,
+  EmptyState,
+  Skeleton,
+  Table,
+  TableWrap,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  buttonClasses,
+} from "@/components/ui";
 import { SubscriberStatusBadge } from "./subscriber-status-badge";
 
 type StatusFilter = "all" | "active" | "unsubscribed";
@@ -17,11 +31,7 @@ const FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "unsubscribed", label: "Unsubscribed" },
 ];
 
-const cellClass = "px-3 py-3 align-middle text-sm";
-const headerClass = "px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-500";
 const tabBase = "rounded-md px-3 py-1.5 text-sm font-medium transition-colors";
-const retryButton =
-  "mt-4 rounded-md border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10";
 
 const SUBSCRIBER_RESULTS: Record<string, { message: string; positive: boolean }> = {
   created: { message: "Subscriber added.", positive: true },
@@ -167,16 +177,7 @@ export function SubscriberList({ canManage }: { canManage: boolean }) {
   return (
     <div className="mt-8 space-y-6">
       {createResult ? (
-        <div
-          role="status"
-          className={
-            createResult.positive
-              ? "rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:border-green-500/40 dark:text-green-400"
-              : "rounded-md border border-amber-600/40 bg-amber-600/10 px-3 py-2 text-sm text-amber-700 dark:border-amber-500/40 dark:text-amber-400"
-          }
-        >
-          {createResult.message}
-        </div>
+        <Alert variant={createResult.positive ? "success" : "warning"}>{createResult.message}</Alert>
       ) : null}
 
       <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -196,8 +197,8 @@ export function SubscriberList({ canManage }: { canManage: boolean }) {
               aria-pressed={selected}
               className={
                 selected
-                  ? `${tabBase} bg-foreground text-background`
-                  : `${tabBase} border border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10`
+                  ? `${tabBase} bg-primary text-on-primary`
+                  : `${tabBase} border border-border text-body hover:bg-black/4 dark:hover:bg-white/10`
               }
             >
               {entry.label}
@@ -207,63 +208,75 @@ export function SubscriberList({ canManage }: { canManage: boolean }) {
       </div>
 
       {tableState === "loading" ? (
-        <p className="text-sm text-zinc-500">Loading subscribers…</p>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
       ) : tableState === "error" ? (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-600 dark:text-red-400">
-          <p className="font-medium">Unable to load subscribers.</p>
-          <p className="mt-1">Something went wrong while fetching the list.</p>
-          <button type="button" onClick={retryTable} className={retryButton}>
+        <div>
+          <Alert variant="error">
+            Unable to load subscribers. Something went wrong while fetching the list.
+          </Alert>
+          <Button variant="secondary" className="mt-3" onClick={retryTable}>
             Try again
-          </button>
+          </Button>
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
-          usingAll={usingAll}
-          canManage={canManage}
-          activeLabel={activeLabel}
-          onShowAll={() => selectFilter("all")}
+          title={usingAll ? "No subscribers yet." : `No ${activeLabel} subscribers.`}
+          action={
+            usingAll ? (
+              canManage ? (
+                <Link href="/cms/subscribers/new" className={buttonClasses()}>
+                  Add Subscriber
+                </Link>
+              ) : undefined
+            ) : (
+              <Button variant="secondary" onClick={() => selectFilter("all")}>
+                Show all
+              </Button>
+            )
+          }
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/15">
-          <table className="w-full border-collapse">
-            <thead className="border-b border-black/10 dark:border-white/15">
-              <tr>
-                <th className={headerClass}>Email</th>
-                <th className={headerClass}>Name</th>
-                <th className={headerClass}>Status</th>
-                <th className={headerClass}>Subscribed</th>
-                <th className={headerClass}>Unsubscribed</th>
-                <th className={`${headerClass} text-right`}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableWrap>
+          <Table>
+            <THead>
+              <Tr>
+                <Th>Email</Th>
+                <Th>Name</Th>
+                <Th>Status</Th>
+                <Th>Subscribed</Th>
+                <Th>Unsubscribed</Th>
+                <Th align="right">Actions</Th>
+              </Tr>
+            </THead>
+            <TBody>
               {rows.map((subscriber) => (
-                <tr
-                  key={subscriber.id}
-                  className="border-b border-black/5 last:border-b-0 dark:border-white/10"
-                >
-                  <td className={cellClass}>
-                    <span className="select-all">{subscriber.email}</span>
-                  </td>
-                  <td className={cellClass}>{subscriber.name?.trim() ? subscriber.name : "—"}</td>
-                  <td className={cellClass}>
+                <Tr key={subscriber.id}>
+                  <Td>
+                    <span className="select-all font-medium text-heading">{subscriber.email}</span>
+                  </Td>
+                  <Td>{subscriber.name?.trim() ? subscriber.name : "—"}</Td>
+                  <Td>
                     <SubscriberStatusBadge status={subscriber.status} />
-                  </td>
-                  <td className={cellClass}>{formatDate(subscriber.subscribedAt)}</td>
-                  <td className={cellClass}>{formatDate(subscriber.unsubscribedAt)}</td>
-                  <td className={`${cellClass} text-right`}>
+                  </Td>
+                  <Td>{formatDate(subscriber.subscribedAt)}</Td>
+                  <Td>{formatDate(subscriber.unsubscribedAt)}</Td>
+                  <Td align="right">
                     <Link
                       href={`/cms/subscribers/${subscriber.id}`}
-                      className="text-sm font-medium hover:underline"
+                      className="text-sm font-medium text-primary transition-colors hover:underline"
                     >
                       View
                     </Link>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TBody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );
@@ -271,46 +284,11 @@ export function SubscriberList({ canManage }: { canManage: boolean }) {
 
 function StatCard({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="rounded-xl border border-black/10 bg-black/[.02] p-4 dark:border-white/15 dark:bg-white/[.03]">
-      <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</dt>
-      <dd className="mt-1 text-2xl font-semibold">{value === null ? "—" : value}</dd>
-    </div>
-  );
-}
-
-function EmptyState({
-  usingAll,
-  canManage,
-  activeLabel,
-  onShowAll,
-}: {
-  usingAll: boolean;
-  canManage: boolean;
-  activeLabel: string;
-  onShowAll: () => void;
-}) {
-  return (
-    <div className="rounded-lg border border-black/10 p-8 text-center dark:border-white/15">
-      {usingAll ? (
-        <>
-          <p className="text-sm text-zinc-500">No subscribers yet.</p>
-          {canManage ? (
-            <Link
-              href="/cms/subscribers/new"
-              className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              Add Subscriber
-            </Link>
-          ) : null}
-        </>
-      ) : (
-        <>
-          <p className="text-sm text-zinc-500">No {activeLabel} subscribers.</p>
-          <button type="button" onClick={onShowAll} className={`${retryButton} inline-block`}>
-            Show all
-          </button>
-        </>
-      )}
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-1 font-serif text-2xl font-semibold tabular-nums text-heading">
+        {value === null ? "—" : value}
+      </dd>
     </div>
   );
 }

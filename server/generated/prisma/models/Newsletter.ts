@@ -30,6 +30,7 @@ export type NewsletterMinAggregateOutputType = {
   slug: string | null
   content: string | null
   excerpt: string | null
+  featuredImageUrl: string | null
   status: $Enums.NewsletterStatus | null
   publishedAt: Date | null
   createdAt: Date | null
@@ -44,6 +45,7 @@ export type NewsletterMaxAggregateOutputType = {
   slug: string | null
   content: string | null
   excerpt: string | null
+  featuredImageUrl: string | null
   status: $Enums.NewsletterStatus | null
   publishedAt: Date | null
   createdAt: Date | null
@@ -58,6 +60,7 @@ export type NewsletterCountAggregateOutputType = {
   slug: number
   content: number
   excerpt: number
+  featuredImageUrl: number
   status: number
   publishedAt: number
   createdAt: number
@@ -74,6 +77,7 @@ export type NewsletterMinAggregateInputType = {
   slug?: true
   content?: true
   excerpt?: true
+  featuredImageUrl?: true
   status?: true
   publishedAt?: true
   createdAt?: true
@@ -88,6 +92,7 @@ export type NewsletterMaxAggregateInputType = {
   slug?: true
   content?: true
   excerpt?: true
+  featuredImageUrl?: true
   status?: true
   publishedAt?: true
   createdAt?: true
@@ -102,6 +107,7 @@ export type NewsletterCountAggregateInputType = {
   slug?: true
   content?: true
   excerpt?: true
+  featuredImageUrl?: true
   status?: true
   publishedAt?: true
   createdAt?: true
@@ -189,6 +195,7 @@ export type NewsletterGroupByOutputType = {
   slug: string
   content: string
   excerpt: string | null
+  featuredImageUrl: string | null
   status: $Enums.NewsletterStatus
   publishedAt: Date | null
   createdAt: Date
@@ -224,6 +231,7 @@ export type NewsletterWhereInput = {
   slug?: Prisma.StringFilter<"Newsletter"> | string
   content?: Prisma.StringFilter<"Newsletter"> | string
   excerpt?: Prisma.StringNullableFilter<"Newsletter"> | string | null
+  featuredImageUrl?: Prisma.StringNullableFilter<"Newsletter"> | string | null
   status?: Prisma.EnumNewsletterStatusFilter<"Newsletter"> | $Enums.NewsletterStatus
   publishedAt?: Prisma.DateTimeNullableFilter<"Newsletter"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Newsletter"> | Date | string
@@ -240,6 +248,7 @@ export type NewsletterOrderByWithRelationInput = {
   slug?: Prisma.SortOrder
   content?: Prisma.SortOrder
   excerpt?: Prisma.SortOrderInput | Prisma.SortOrder
+  featuredImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -259,6 +268,7 @@ export type NewsletterWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Newsletter"> | string
   content?: Prisma.StringFilter<"Newsletter"> | string
   excerpt?: Prisma.StringNullableFilter<"Newsletter"> | string | null
+  featuredImageUrl?: Prisma.StringNullableFilter<"Newsletter"> | string | null
   status?: Prisma.EnumNewsletterStatusFilter<"Newsletter"> | $Enums.NewsletterStatus
   publishedAt?: Prisma.DateTimeNullableFilter<"Newsletter"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Newsletter"> | Date | string
@@ -275,6 +285,7 @@ export type NewsletterOrderByWithAggregationInput = {
   slug?: Prisma.SortOrder
   content?: Prisma.SortOrder
   excerpt?: Prisma.SortOrderInput | Prisma.SortOrder
+  featuredImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -295,6 +306,7 @@ export type NewsletterScalarWhereWithAggregatesInput = {
   slug?: Prisma.StringWithAggregatesFilter<"Newsletter"> | string
   content?: Prisma.StringWithAggregatesFilter<"Newsletter"> | string
   excerpt?: Prisma.StringNullableWithAggregatesFilter<"Newsletter"> | string | null
+  featuredImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Newsletter"> | string | null
   status?: Prisma.EnumNewsletterStatusWithAggregatesFilter<"Newsletter"> | $Enums.NewsletterStatus
   publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Newsletter"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Newsletter"> | Date | string
@@ -309,6 +321,7 @@ export type NewsletterCreateInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -323,6 +336,7 @@ export type NewsletterUncheckedCreateInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -337,6 +351,7 @@ export type NewsletterUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -351,6 +366,7 @@ export type NewsletterUncheckedUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -365,6 +381,7 @@ export type NewsletterCreateManyInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -379,6 +396,7 @@ export type NewsletterUpdateManyMutationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -391,6 +409,7 @@ export type NewsletterUncheckedUpdateManyInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -415,6 +434,7 @@ export type NewsletterCountOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   content?: Prisma.SortOrder
   excerpt?: Prisma.SortOrder
+  featuredImageUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -429,6 +449,7 @@ export type NewsletterMaxOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   content?: Prisma.SortOrder
   excerpt?: Prisma.SortOrder
+  featuredImageUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -443,6 +464,7 @@ export type NewsletterMinOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   content?: Prisma.SortOrder
   excerpt?: Prisma.SortOrder
+  featuredImageUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -545,6 +567,7 @@ export type NewsletterCreateWithoutAuthorInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -558,6 +581,7 @@ export type NewsletterUncheckedCreateWithoutAuthorInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -600,6 +624,7 @@ export type NewsletterScalarWhereInput = {
   slug?: Prisma.StringFilter<"Newsletter"> | string
   content?: Prisma.StringFilter<"Newsletter"> | string
   excerpt?: Prisma.StringNullableFilter<"Newsletter"> | string | null
+  featuredImageUrl?: Prisma.StringNullableFilter<"Newsletter"> | string | null
   status?: Prisma.EnumNewsletterStatusFilter<"Newsletter"> | $Enums.NewsletterStatus
   publishedAt?: Prisma.DateTimeNullableFilter<"Newsletter"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Newsletter"> | Date | string
@@ -614,6 +639,7 @@ export type NewsletterCreateWithoutCategoryInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -627,6 +653,7 @@ export type NewsletterUncheckedCreateWithoutCategoryInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -666,6 +693,7 @@ export type NewsletterCreateManyAuthorInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -679,6 +707,7 @@ export type NewsletterUpdateWithoutAuthorInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -692,6 +721,7 @@ export type NewsletterUncheckedUpdateWithoutAuthorInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -705,6 +735,7 @@ export type NewsletterUncheckedUpdateManyWithoutAuthorInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -718,6 +749,7 @@ export type NewsletterCreateManyCategoryInput = {
   slug: string
   content: string
   excerpt?: string | null
+  featuredImageUrl?: string | null
   status?: $Enums.NewsletterStatus
   publishedAt?: Date | string | null
   createdAt?: Date | string
@@ -731,6 +763,7 @@ export type NewsletterUpdateWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -744,6 +777,7 @@ export type NewsletterUncheckedUpdateWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -757,6 +791,7 @@ export type NewsletterUncheckedUpdateManyWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featuredImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNewsletterStatusFieldUpdateOperationsInput | $Enums.NewsletterStatus
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -772,6 +807,7 @@ export type NewsletterSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   slug?: boolean
   content?: boolean
   excerpt?: boolean
+  featuredImageUrl?: boolean
   status?: boolean
   publishedAt?: boolean
   createdAt?: boolean
@@ -788,6 +824,7 @@ export type NewsletterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   slug?: boolean
   content?: boolean
   excerpt?: boolean
+  featuredImageUrl?: boolean
   status?: boolean
   publishedAt?: boolean
   createdAt?: boolean
@@ -804,6 +841,7 @@ export type NewsletterSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   slug?: boolean
   content?: boolean
   excerpt?: boolean
+  featuredImageUrl?: boolean
   status?: boolean
   publishedAt?: boolean
   createdAt?: boolean
@@ -820,6 +858,7 @@ export type NewsletterSelectScalar = {
   slug?: boolean
   content?: boolean
   excerpt?: boolean
+  featuredImageUrl?: boolean
   status?: boolean
   publishedAt?: boolean
   createdAt?: boolean
@@ -828,7 +867,7 @@ export type NewsletterSelectScalar = {
   categoryId?: boolean
 }
 
-export type NewsletterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "content" | "excerpt" | "status" | "publishedAt" | "createdAt" | "updatedAt" | "authorId" | "categoryId", ExtArgs["result"]["newsletter"]>
+export type NewsletterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "content" | "excerpt" | "featuredImageUrl" | "status" | "publishedAt" | "createdAt" | "updatedAt" | "authorId" | "categoryId", ExtArgs["result"]["newsletter"]>
 export type NewsletterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   category?: boolean | Prisma.Newsletter$categoryArgs<ExtArgs>
@@ -854,6 +893,7 @@ export type $NewsletterPayload<ExtArgs extends runtime.Types.Extensions.Internal
     slug: string
     content: string
     excerpt: string | null
+    featuredImageUrl: string | null
     status: $Enums.NewsletterStatus
     publishedAt: Date | null
     createdAt: Date
@@ -1290,6 +1330,7 @@ export interface NewsletterFieldRefs {
   readonly slug: Prisma.FieldRef<"Newsletter", 'String'>
   readonly content: Prisma.FieldRef<"Newsletter", 'String'>
   readonly excerpt: Prisma.FieldRef<"Newsletter", 'String'>
+  readonly featuredImageUrl: Prisma.FieldRef<"Newsletter", 'String'>
   readonly status: Prisma.FieldRef<"Newsletter", 'NewsletterStatus'>
   readonly publishedAt: Prisma.FieldRef<"Newsletter", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Newsletter", 'DateTime'>
