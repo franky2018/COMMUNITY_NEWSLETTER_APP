@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
+/* Force light mode: make `dark:` a class-based variant so it never activates from the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
 
@@ -78,22 +82,6 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-source-serif);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-
-    --canvas: #0b0f17;
-    --card: #121826;
-    --border: #232a3a;
-    --input: #333c52;
-
-    --heading: #f1f4f9;
-    --body: #c7cdda;
-    --muted: #8b93a4;
-  }
 }
 
 body {
