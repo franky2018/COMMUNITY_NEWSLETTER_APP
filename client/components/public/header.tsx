@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 
@@ -30,16 +31,17 @@ export function PublicHeader() {
         <Link
           href="/"
           onClick={close}
-          className="flex items-center gap-2.5"
+          className="flex items-center"
           aria-label="Community Newsletter home"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-on-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M4 4h13a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4Z" />
-              <path d="M8 8h7M8 12h7M8 16h4" />
-            </svg>
-          </span>
-          <span className="font-serif text-base font-semibold text-heading">Community Newsletter</span>
+          <Image
+            src="/logo.png"
+            alt="Community Newsletter"
+            width={519}
+            height={141}
+            priority
+            className="h-8 w-auto"
+          />
         </Link>
 
         <nav aria-label="Primary" className="ml-auto hidden items-center gap-1 sm:flex">
