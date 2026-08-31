@@ -35,10 +35,10 @@ export function PublicHeader() {
           aria-label="Community Newsletter home"
         >
           <Image
-            src="/logo.png"
+            src="/icon.png"
             alt="Community Newsletter"
-            width={519}
-            height={141}
+            width={232}
+            height={232}
             priority
             className="h-8 w-auto"
           />
