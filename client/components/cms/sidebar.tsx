@@ -23,7 +23,7 @@ function SidebarBrand({ onNavigate }: { onNavigate?: () => void }) {
       aria-label="Community Newsletter dashboard"
     >
       <Image
-        src="/logo-mark.png"
+        src="/icon.png"
         alt=""
         width={232}
         height={232}
