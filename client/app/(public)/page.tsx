@@ -33,6 +33,12 @@ export default function PublicHomePage() {
               >
                 Browse newsletters
               </Link>
+              <Link
+                href="/auth/login"
+                className={buttonClasses({ variant: "ghost", className: "px-5 py-2.5" })}
+              >
+                Login
+              </Link>
             </div>
           </div>
         </div>
